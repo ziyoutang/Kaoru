@@ -179,6 +179,9 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .motif-taste{left:9.36%;top:76.53%;--drift-x:38px;--drift-y:-31px;--drift-time:17s;--drift-delay:-4s}
 .motif-smell{left:86.14%;top:15.12%;--drift-x:-42px;--drift-y:29px;--drift-time:13s;--drift-delay:-8s}
 .motif-touch{left:83.43%;top:59.11%;--drift-x:-36px;--drift-y:-43px;--drift-time:19s;--drift-delay:-11s}
+.motif-lavender{left:12%;top:15.5%;--drift-x:28px;--drift-y:-18px;--drift-time:18s;--drift-delay:-9s}
+.motif-hearing{left:12.7%;top:56%;--drift-x:17px;--drift-y:22px;--drift-time:16s;--drift-delay:-12s}
+.motif-sight{left:77.8%;top:83%;--drift-x:24px;--drift-y:-19px;--drift-time:20s;--drift-delay:-6s}
 
 .entries-filters{
   --filter-fade:1500ms;position:absolute;top:38.4%;left:4.2%;width:9.7%;display:grid;justify-items:center;
@@ -408,6 +411,9 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .home-dock{bottom:3%}
   .motif-taste{top:73%;left:4%}.motif-smell{top:8%;left:83%}
   .motif-touch{top:64%;left:83%}
+  .motif-lavender{left:8%;top:9%;--drift-x:13px;--drift-y:-14px}
+  .motif-hearing{left:5%;top:66%;--drift-x:10px;--drift-y:13px}
+  .motif-sight{left:80%;top:86%;--drift-x:13px;--drift-y:-12px}
   .face-senses .home-panel{--sense-center-x:51.5%;--sense-center-y:46.5%}
   .sense-eyes{left:9%;top:31%;width:34%;height:16%}
   .sense-ears{left:49%;top:25%;width:30%;height:16%}

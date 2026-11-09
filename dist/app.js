@@ -249,7 +249,10 @@ const homeViews = ['Entries','Senses','Create New'];
 const homeMotifs = `
   <img class="home-motif motif-taste" src="assets/entries/citrus-slice.svg" width="130" height="130" alt="">
   <img class="home-motif motif-smell" src="assets/entries/scent-wisps.svg" width="106" height="108" alt="">
-  <img class="home-motif motif-touch" src="assets/entries/fingerprint.svg" width="146" height="145" alt="">`;
+  <img class="home-motif motif-touch" src="assets/entries/fingerprint.svg" width="146" height="145" alt="">
+  <img class="home-motif motif-lavender" src="assets/entries/lavender.svg" width="98" height="116" alt="">
+  <img class="home-motif motif-hearing" src="assets/entries/sound-ripples.svg" width="108" height="80" alt="">
+  <img class="home-motif motif-sight" src="assets/entries/prism.svg" width="109" height="85" alt="">`;
 const senses = {
   eyes:['Eyes','What caught your eye?'],
   ears:['Ears','What could you hear?'],
