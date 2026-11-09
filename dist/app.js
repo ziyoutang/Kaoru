@@ -332,6 +332,9 @@ function rotateHome(direction) {
   const index = homeIndex();
   const next = document.querySelector(`.home-navigation .home-view[data-value="${index}"]`);
   if (document.activeElement?.closest('.home-face, .entries-filters, .sense-caption')) next?.focus({preventScroll:true});
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    turntable.parentElement.classList.add('is-turning');
+  }
   turntable.style.setProperty('--home-angle', `${-120 * homeTurn}deg`);
   turntable.querySelectorAll('.home-face').forEach((face,i) => {
     face.inert = i !== index;
@@ -341,7 +344,7 @@ function rotateHome(direction) {
     if (i === index) control.setAttribute('aria-current','page');
     else control.removeAttribute('aria-current');
   });
-  document.querySelector('.entries-filters').hidden = index !== 0;
+  document.querySelector('.entries-filters').inert = index !== 0;
   document.querySelector('.sense-caption').hidden = index !== 1;
   document.querySelector('#home-next-label').textContent = homeViews[(index + 1) % homeViews.length];
   document.querySelector('#home-announcement').textContent = homeViews[index] + ' view';
@@ -859,6 +862,11 @@ document.addEventListener('touchend', event => {
   rotateHome(dx < 0 ? 1 : -1);
 },{passive:false});
 document.addEventListener('touchcancel', () => { swipeOrigin = null; },{passive:true});
+document.addEventListener('transitionend', event => {
+  if (event.propertyName === 'transform' && event.target.matches('.home-turntable')) {
+    event.target.parentElement.classList.remove('is-turning');
+  }
+});
 window.addEventListener('hashchange', () => render(true));
 window.addEventListener('pagehide', () => { if (active) rememberDraft(); });
 render();

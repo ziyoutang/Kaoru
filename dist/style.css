@@ -171,17 +171,30 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .dot-tr{left:86.14%;top:15.12%}
 .dot-br{left:83.43%;top:59.11%}
 .dot-tl{left:16.43%;top:21.23%}
-.entries-filters{position:absolute;top:38.4%;left:4.2%;width:9.7%;display:grid;justify-items:center}
+.entries-filters{
+  --filter-fade:1500ms;position:absolute;top:38.4%;left:4.2%;width:9.7%;display:grid;justify-items:center;
+  opacity:1;visibility:visible;transition:opacity var(--filter-fade) ease,visibility 0s;
+}
+.entries-filters[inert]{opacity:0;visibility:hidden;transition-delay:0s,var(--filter-fade)}
 .entries-filters button,.entries-search input{
   font:italic 400 clamp(14px,1.38cqw,21px)/1.2 var(--entries-type);
   background:transparent;border:0;
 }
 .entries-filters button{min-height:clamp(28px,3cqw,46px);padding:0 5px;color:#6f6f6f}
 .entries-filters button[aria-pressed=true],.entries-filters button:hover{color:#171717}
-.entries-deck{position:absolute;left:26.12%;top:26.47%;width:52.71%;height:43.89%}
+.entries-deck{
+  --card-angle:-9deg;--card-spread:3px;
+  position:absolute;left:26.12%;top:26.47%;width:52.71%;height:43.89%;
+  perspective:clamp(620px,95cqw,1435px);perspective-origin:38% 55%;transform-style:preserve-3d;pointer-events:none;
+}
+.deck-front,.deck-sheet{
+  transform:translate3d(calc(var(--card-index,0) * var(--card-spread)),0,var(--card-depth,12px)) rotateY(var(--card-angle));
+  transition:transform 520ms cubic-bezier(.22,.61,.36,1),background-color 200ms ease;
+}
+.home-orbit.is-turning .entries-deck{--card-angle:-16deg;--card-spread:clamp(5px,.72cqw,11px)}
 .deck-front,.deck-sheet{position:absolute;overflow:hidden;border:0;border-radius:0}
 .deck-front{
-  inset:0 auto 0 0;width:43.54%;z-index:4;
+  inset:0 auto 0 0;width:43.54%;z-index:4;pointer-events:auto;
   display:grid;grid-template-rows:1fr auto 1fr;justify-items:center;align-items:center;gap:4px;
   padding:clamp(12px,1.35cqw,21px) clamp(10px,1.4cqw,22px);text-align:center;
   color:var(--cream);background:var(--navy);box-shadow:7px 8px 13.5px 4px #0004;
@@ -206,10 +219,9 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .front-scent svg{color:var(--cream)}
 .front-scent:hover{border-color:var(--cream)}
 .deck-front :focus-visible{outline-color:#fff}
-.deck-sheet{transition:background-color 200ms ease}
 .deck-sheet img{position:absolute;inset:0;filter:grayscale(1);opacity:.17;mix-blend-mode:multiply;pointer-events:none}
 .deck-sheet-control{
-  position:absolute;inset:0 0 0 auto;width:var(--exposed);
+  position:absolute;inset:0 0 0 auto;width:var(--exposed);pointer-events:auto;
   display:flex;justify-content:flex-end;align-items:flex-end;text-align:right;
   padding:0;border:0;background:transparent;
 }
@@ -219,9 +231,9 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 }
 .deck-sheet:has(.deck-sheet-control:hover){background:#d9dce3}
 .deck-sheet-control:focus-visible{outline-offset:-4px}
-.sheet-1{--exposed:63%;left:29.23%;top:6.96%;width:39.52%;height:93.04%;z-index:3;background:#e4e4e4}
-.sheet-2{--exposed:51%;left:53.2%;top:12.76%;width:31.87%;height:81.44%;z-index:2;background:#ececec}
-.sheet-3{--exposed:66%;left:77.67%;top:20.42%;width:22.33%;height:64.97%;z-index:1;background:#f5f5f5}
+.sheet-1{--exposed:63%;--card-index:1;--card-depth:-12px;left:29.23%;top:3%;width:39.52%;height:93.04%;z-index:3;background:#e4e4e4}
+.sheet-2{--exposed:51%;--card-index:2;--card-depth:-34px;left:53.2%;top:-.5%;width:31.87%;height:81.44%;z-index:2;background:#ececec}
+.sheet-3{--exposed:66%;--card-index:3;--card-depth:-57px;left:77.67%;top:-4.5%;width:22.33%;height:64.97%;z-index:1;background:#f5f5f5}
 .entries-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .entries-search{
   position:absolute;top:79.74%;left:32.8%;width:41.07%;min-height:clamp(42px,3.84cqw,58px);
@@ -236,7 +248,9 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .home-orbit{
   --orbit-radius:clamp(90px,28.87cqw,438px);
   position:absolute;inset:0;z-index:1;perspective:clamp(560px,102cqw,1542px);perspective-origin:50% 49%;
+  transition:transform 510ms cubic-bezier(.22,.61,.36,1);
 }
+.home-orbit.is-turning{transform:perspective(1400px) rotateX(7deg) translateY(-4px)}
 .home-turntable{
   position:absolute;inset:0;transform-style:preserve-3d;
   transform:translateZ(calc(-1 * var(--orbit-radius))) rotateY(var(--home-angle,0deg));
@@ -252,10 +266,18 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   transition:opacity 900ms cubic-bezier(.3,.42,.5,1);
 }
 .home-face[inert] .home-panel{opacity:0}
+.home-panel::before{
+  content:"";position:absolute;left:24%;top:63.9%;width:57%;height:10.5%;
+  border:1px solid #e4e6eb;border-radius:2px;background:#f2f3f6;
+  box-shadow:0 5px 0 #e0e3e9,0 15px 27px #28335123;
+  transform:perspective(480px) rotateX(63deg);transform-origin:center bottom;
+  opacity:0;pointer-events:none;transition:opacity 400ms ease;
+}
+.home-orbit.is-turning .home-panel::before{opacity:.82}
 .face-senses{--home-face-angle:120deg}
 .face-create{--home-face-angle:240deg}
 .entries-logo,.entries-filters,.entries-search,.sense-caption,.home-next{z-index:2}
-.entries-filters[hidden],.sense-caption[hidden]{display:none}
+.sense-caption[hidden]{display:none}
 .home-next{
   position:absolute;top:74.7%;left:50%;transform:translate(-50%,-50%);
   display:inline-flex;align-items:center;gap:7px;min-height:31px;padding:3px 6px;
@@ -347,7 +369,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .sense-lips{left:72%;top:55%;width:22%;height:15%}
   .sense-create{left:76%;top:41%;width:18%;height:12%;aspect-ratio:auto}
   .sense-create img{transform:translate(-50%,-50%) scale(.45)}
-  .sense-caption{top:20%;left:50%}
+  .sense-caption{top:22.6%;left:50%}
   .home-next{top:75.4%;left:50%}
   .home-create{top:43%;left:50%}
 }
@@ -362,4 +384,4 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .front-scent{min-height:24px;padding-block:2px}
   .btn.deck-action{min-height:25px}
 }
-@media(prefers-reduced-motion:reduce){.deck-sheet,.home-turntable,.home-panel{transition:none}}
+@media(prefers-reduced-motion:reduce){.entries-filters,.deck-front,.deck-sheet,.home-orbit,.home-turntable,.home-panel,.home-panel::before{transition:none}}
