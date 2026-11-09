@@ -1037,3 +1037,13 @@ html[data-theme=dark] body,html[data-theme=dark] body:has(#main > .view){--ink:#
 @media(min-width:701px){
   .collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){height:calc(50% - clamp(12px,2dvh,18px));grid-template-rows:minmax(0,1fr)}
 }
+
+/* One brand anchor across home, creation, and editing screens. */
+:root{--brand-top:10.39dvh;--brand-size:clamp(32px,3.44vw,52px);--brand-caption:clamp(10px,1vw,15px);--brand-gap:min(.85vw,16.32px)}
+.entries-logo{top:var(--brand-top)}
+.entries-logo h1{font-size:var(--brand-size)}
+.entries-logo p{font-size:var(--brand-caption);margin-top:var(--brand-gap)}
+body:has(#main > .view) .bar{padding-top:var(--brand-top);gap:16px}
+body:has(#main > .view) .brand{font:400 var(--brand-size)/.95 Lekton,monospace;gap:var(--brand-gap);letter-spacing:0}
+body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height:1.2}
+@media(max-width:700px){:root{--brand-top:6dvh;--brand-size:clamp(28px,6.3dvh,43px);--brand-caption:clamp(9px,1.7dvh,12px);--brand-gap:6px}}
