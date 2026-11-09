@@ -577,7 +577,10 @@ function updateCaptureModels() {
   const key = [...types].sort().join(',');
   if (container.dataset.detected === key) return;
   container.dataset.detected = key;
-  container.innerHTML = types.map(type => `<div class="capture-model capture-model-${type}"><canvas class="sense-model" data-sense-model="${type}"></canvas><small>${senses[type][0]}</small></div>`).join('');
+  const order = (container.dataset.order || '').split(',').filter(type => types.includes(type));
+  order.push(...types.filter(type => !order.includes(type)));
+  container.dataset.order = order.join(',');
+  container.innerHTML = order.map((type,index) => `<div class="capture-model capture-model-${type}" style="--capture-row:${Math.floor(index / 2)}"><canvas class="sense-model" data-sense-model="${type}"></canvas><small>${senses[type][0]}</small></div>`).join('');
   document.querySelector('#capture-detected').textContent = types.length ? 'Senses noticed: ' + types.map(type => senses[type][0]).join(', ') : '';
   if (types.length) window.KaoruSenses.mount(container);
 }
