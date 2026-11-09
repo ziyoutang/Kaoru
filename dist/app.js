@@ -357,11 +357,11 @@ const homeMotifs = `
   <img class="home-motif motif-hearing" src="assets/entries/sound-ripples.svg" width="108" height="80" alt="">
   <img class="home-motif motif-sight" src="assets/entries/prism.svg" width="109" height="85" alt="">`;
 const senses = {
-  eyes:['Eyes','What caught your eye?'],
-  ears:['Ears','What could you hear?'],
-  hand:['Hand','What did it feel like?'],
-  nose:['Nose','What did it smell like?'],
-  lips:['Lips','What did it taste like?']
+  eyes:['Sight','What caught your eye?'],
+  ears:['Hearing','What could you hear?'],
+  hand:['Touch','What did it feel like?'],
+  nose:['Smell','What did it smell like?'],
+  lips:['Taste','What did it taste like?']
 };
 let homeTurn = 0;
 let homeSense = '';
@@ -545,9 +545,9 @@ function renderCapture(type) {
     <h1 class="entries-status">Capture New Senses</h1>
     <form id="capture-sense" class="sense-capture-form">
       <div class="capture-models" aria-hidden="true"></div><p id="capture-detected" class="entries-status" aria-live="polite"></p>
-      <p class="sense-capture-prompt">Describe your sensory experience.</p>
+      <p class="sense-capture-prompt">Describe your sensory experience.<small id="capture-hint">Try words like “smell,” “taste,” “touch,” “hear,” or “see” to help identify your senses.</small></p>
       <div class="sense-writing-paper">
-        <div class="field"><label for="capture-detail">What did you notice?</label><textarea id="capture-detail" name="detail" placeholder="Describe the moment…" maxlength="220" required>${esc(draft?.detail || '')}</textarea></div>
+        <div class="field"><label for="capture-detail">What did you notice?</label><textarea id="capture-detail" aria-describedby="capture-hint" name="detail" placeholder="Describe the moment…" maxlength="220" required>${esc(draft?.detail || '')}</textarea></div>
       </div>
       <button type="submit" class="btn flow-continue">Continue ${icon('arrow')}</button>
     </form>

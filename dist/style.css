@@ -816,3 +816,73 @@ body:has(#main > .view){
 .sense-orbit-anchor:nth-child(5){top:62%}
 .captured-sense .captured-sense-name{font:400 20px/1.2 Lekton,monospace}
 @media(max-width:650px){.sense-artwork .sense-orbit-anchor > .sense-orbit-model{width:85px;height:85px}}
+
+/* Keep each screen inside the viewport; long content scrolls in its own panel. */
+body:has(#main > .view){height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+body:has(#main > .view) #header{flex:none}
+body:has(#main > .view) .bar{padding-top:clamp(16px,3.5dvh,36px);gap:clamp(8px,1.5dvh,16px)}
+body:has(#main > .view) #main{flex:1;min-height:0;overflow:hidden}
+#main > .view{height:100%;min-height:0;padding-block:clamp(8px,1.8dvh,18px);display:flex;flex-direction:column;gap:0}
+.view > :not(.entries-status){flex-shrink:0}
+.view > :is(.grid,.index-grid,.detail-grid){flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.view > .view-title{margin-block:clamp(8px,1.5dvh,18px)}
+.view .view-title h1{font-size:clamp(30px,5dvh,52px)}
+.view > .wizard{width:100%;height:100%;min-height:0;display:flex;flex-direction:column}
+.wizard > :is(.panel,.editor-grid){flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.wizard > .view-title{margin-block:8px}
+.wizard .progress{margin-block:8px 14px}
+.wizard .editor-actions{position:sticky;bottom:-20px;background:var(--soft);padding-bottom:10px;z-index:2}
+.view .detail-grid > .scene-art{max-height:100%;aspect-ratio:auto;min-height:0}
+.view .detail-panel{overflow:auto;min-height:0;max-height:100%}
+.create-choice-view #create-flow{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
+.create-choice-view .flow-choices{margin-block:clamp(12px,3dvh,28px) 0}
+.create-choice-view .flow-tile{min-height:0;height:clamp(110px,28dvh,300px);aspect-ratio:auto}
+.create-choice-view .flow-continue{margin-top:clamp(12px,3dvh,28px)}
+.view > .sense-choices{flex:1;min-height:0;margin-block:clamp(12px,3dvh,30px);align-content:center}
+.sense-choices .flow-tile{min-height:0;height:min(44dvh,400px)}
+.sense-wheel{height:min(38dvh,350px)}
+.view > .sense-capture-form{flex:1;min-height:0;width:100%;margin-block:clamp(12px,3dvh,30px) 0;display:flex;flex-direction:column}
+.sense-capture-form .sense-writing-paper{flex:1;min-height:0;margin-block:0}
+.sense-writing-paper .field{height:100%;display:flex;flex-direction:column}
+.sense-capture-form:has(.capture-models) #capture-detail{flex:1;min-height:0;height:100%;resize:none}
+.sense-capture-form .flow-continue{margin-block:12px 0;flex:none}
+.sense-capture-form .capture-models{max-height:100%}
+.view > .sense-naming-scene{flex:1;min-height:0;width:100%;margin-block:clamp(12px,3dvh,30px) 0}
+.sense-naming-form{max-height:100%;overflow:auto;padding:4px 4px 8px;overscroll-behavior:contain}
+.sense-naming-form #sense-memory-detail{min-height:80px;height:clamp(80px,18dvh,180px);resize:none}
+.sense-naming-scene .sense-artwork{height:min(38dvh,340px)}
+.sense-naming-scene .sense-artwork::before{width:min(90%,34dvh,330px)}
+.sense-result-view .sense-artwork{flex:1;min-height:120px;max-height:38dvh;width:100%;margin-top:10px}
+.sense-result-view .captured-sense{flex-shrink:1;min-height:0;overflow:auto}
+.sense-result-view .flow-continue{margin-block:10px 0}
+@media(max-width:650px){
+  body:has(#main > .view) .brand{font-size:34px}
+  .view .view-title h1{font-size:30px}
+  .create-choice-view .flow-tile{height:min(19dvh,150px)}
+  .sense-choices .flow-tile{height:min(25dvh,210px);aspect-ratio:auto}
+  .sense-choices.is-browsing{gap:12px;align-content:center}
+  .sense-wheel-panel > p{margin-bottom:4px}
+  .sense-wheel{height:min(22dvh,160px);padding-block:40px}
+  .capture-models{flex:none}
+  .view > .sense-naming-scene{grid-template-rows:minmax(90px,20dvh) minmax(0,1fr);gap:4px;margin-top:4px}
+  .sense-naming-scene .sense-artwork{height:100%;min-height:0}
+  .sense-naming-scene .sense-artwork::before{width:min(150px,18dvh)}
+  .sense-naming-form .field{margin-bottom:8px}
+  .sense-naming-form .flow-continue{margin-top:8px}
+  .sense-result-view .sense-artwork{max-height:32dvh}
+}
+@media(max-height:600px){
+  body:has(#main > .view) .bar{padding-top:10px;gap:5px}
+  body:has(#main > .view) .brand{font-size:30px}
+  .view .view-title p,.wizard .view-title .kicker{display:none}
+  .view .view-title h1{font-size:28px}
+  .capture-model{height:75px;width:75px}
+  .capture-model:nth-child(odd){top:calc(var(--capture-row) * 80px)}
+  .capture-model:nth-child(even){top:calc(25px + var(--capture-row) * 80px)}
+}
+
+.sense-capture-prompt small{display:block;font-size:13px;line-height:1.5;margin-top:6px;color:var(--muted)}
+
+#main > .view > a.btn.link{align-self:flex-start}
+
+html:has(#main > .view){height:100%;overflow:hidden}
