@@ -160,6 +160,7 @@ window.KaoruSenses = (() => {
     if (!gl.getProgramParameter(program,gl.LINK_STATUS)) return null;
     gl.useProgram(program);
     gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.SCISSOR_TEST);
     gl.clearColor(0,0,0,0);
     const position=gl.getAttribLocation(program,'position'),normal=gl.getAttribLocation(program,'normal');
     const angles=gl.getUniformLocation(program,'angles'),scale=gl.getUniformLocation(program,'scale');
@@ -174,11 +175,11 @@ window.KaoruSenses = (() => {
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
         meshes.set(key,{data,index,count:indices.length});
       }
-      if (surface.width !== width || surface.height !== height) {
-        surface.width=width; surface.height=height;
-      }
+      if (surface.width < width) surface.width=width;
+      if (surface.height < height) surface.height=height;
       const mesh=meshes.get(key), ratio=width/height;
       gl.viewport(0,0,width,height);
+      gl.scissor(0,0,width,height);
       gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
       gl.bindBuffer(gl.ARRAY_BUFFER,mesh.data);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.index);
@@ -193,11 +194,22 @@ window.KaoruSenses = (() => {
   }
 
   const poses=new WeakMap();
+  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  const finePointer=matchMedia('(hover: hover) and (pointer: fine)');
+  const turns={
+    eyes:{yaw:-.38,rate:.155},
+    ears:{yaw:.40,rate:-.11},
+    hand:{yaw:-.65,rate:.25},
+    nose:{yaw:-.45,rate:-.19},
+    lips:{yaw:.55,rate:.125}
+  };
   let renderModel;
+  let activeFace, activeCanvases=[];
+  let animationFrame=0, lastFrame=0;
   let drag, draggedTile;
   function draw(canvas) {
     if (!renderModel || !canvas.isConnected) return;
-    const scale=Math.min(2,window.devicePixelRatio||1);
+    const scale=Math.min(2,window.devicePixelRatio||1,520/canvas.clientWidth,360/canvas.clientHeight);
     const width=Math.round(canvas.clientWidth*scale),height=Math.round(canvas.clientHeight*scale);
     if (!width || !height) return;
     const pose=poses.get(canvas);
@@ -205,25 +217,58 @@ window.KaoruSenses = (() => {
     if (canvas.width!==width || canvas.height!==height) { canvas.width=width;canvas.height=height; }
     const ctx=canvas.getContext('2d');
     ctx.clearRect(0,0,width,height);
-    ctx.drawImage(image,0,0);
+    ctx.drawImage(image,0,image.height-height,width,height,0,0,width,height);
+  }
+  function canAnimate() {
+    return activeFace?.isConnected && !activeFace.inert && !document.hidden && !reducedMotion.matches;
+  }
+  function animate(time) {
+    animationFrame=0;
+    if (!canAnimate()) { lastFrame=0; return; }
+    if (!lastFrame || time-lastFrame>=31) {
+      const elapsed=lastFrame ? Math.min(.08,(time-lastFrame)/1000) : 0;
+      lastFrame=time;
+      for (const canvas of activeCanvases) {
+        const tile=canvas.parentElement;
+        if (drag?.canvas===canvas || tile.matches(':focus-visible') || (finePointer.matches && tile.matches(':hover'))) continue;
+        const pose=poses.get(canvas);
+        const back=Math.max(0,-Math.cos(pose.yaw));
+        pose.yaw+=elapsed*turns[canvas.dataset.senseModel].rate*(1+back*1.5);
+        draw(canvas);
+      }
+    }
+    animationFrame=requestAnimationFrame(animate);
+  }
+  function syncAnimation() {
+    if (canAnimate()) {
+      if (!animationFrame) animationFrame=requestAnimationFrame(animate);
+    } else {
+      cancelAnimationFrame(animationFrame);
+      animationFrame=0;
+      lastFrame=0;
+    }
   }
   function mount(face) {
     if (renderModel === undefined) renderModel=createRenderer();
     if (!renderModel) { face.classList.add('no-sense-models'); return; }
-    for (const canvas of face.querySelectorAll('.sense-model')) {
-      if (!poses.has(canvas)) poses.set(canvas,{yaw:canvas.dataset.senseModel==='ears'?.15:-.13,pitch:-.07});
+    activeFace=face;
+    activeCanvases=[...face.querySelectorAll('.sense-model')];
+    for (const canvas of activeCanvases) {
+      if (!poses.has(canvas)) poses.set(canvas,{yaw:turns[canvas.dataset.senseModel].yaw,pitch:-.07});
       draw(canvas);
     }
+    syncAnimation();
   }
+  document.addEventListener('visibilitychange',syncAnimation);
+  reducedMotion.addEventListener('change',syncAnimation);
   window.addEventListener('resize',() => {
-    document.querySelectorAll('.face-senses:not([inert]) .sense-model').forEach(canvas => {
-      if (poses.has(canvas)) draw(canvas);
-    });
+    if (activeFace?.isConnected && !activeFace.inert) activeCanvases.forEach(draw);
   });
   document.addEventListener('pointerdown',event => {
     const canvas=event.target.closest('.sense-model');
     draggedTile=null;
     if (!canvas || !poses.has(canvas) || event.button!==0) return;
+    canvas.classList.add('is-grabbed');
     drag={canvas,pointer:event.pointerId,x:event.clientX,y:event.clientY,dx:0,dy:0,moved:false};
   });
   document.addEventListener('pointermove',event => {
@@ -240,9 +285,14 @@ window.KaoruSenses = (() => {
   document.addEventListener('pointerup',event => {
     if (drag?.pointer!==event.pointerId) return;
     if (drag.moved) draggedTile=drag.canvas.closest('.sense-tile');
+    drag.canvas.classList.remove('is-grabbed');
     drag=null;
   });
-  document.addEventListener('pointercancel',() => {drag=null;draggedTile=null;});
+  document.addEventListener('pointercancel',event => {
+    if (drag?.pointer!==event.pointerId) return;
+    drag.canvas.classList.remove('is-grabbed');
+    drag=null;draggedTile=null;
+  });
   document.addEventListener('click',event => {
     if (!draggedTile || !event.detail || !draggedTile.contains(event.target)) return;
     draggedTile=null;
