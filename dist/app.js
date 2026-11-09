@@ -139,7 +139,10 @@ function empty(title,body,action = '') {
 }
 function renderHeader(page) {
   header.innerHTML = `<div class="wrap bar">
-    <a href="#diary" class="brand" aria-label="Kaoru home">${icon('scent')}kaoru.</a>
+    <a href="#diary" class="brand" aria-label="Kaoru home. Keep what lingers.">
+      <span class="brand-mark">${icon('scent')}kaoru.</span>
+      <span class="brand-slogan">Keep what lingers.</span>
+    </a>
     <nav class="nav" aria-label="Main navigation">
       <a href="#diary"${page === 'diary' ? ' aria-current="page"' : ''}>Diary</a>
       <a href="#scents"${['scents','scent'].includes(page) ? ' aria-current="page"' : ''}>Scent index</a>
