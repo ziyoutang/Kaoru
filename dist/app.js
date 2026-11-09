@@ -90,7 +90,7 @@ function persist(next = state) {
 }
 function rememberDraft() {
   const existing = state.entries.find(entry => entry.id === active.id);
-  if (existing || ['title','journal','poem','prompt','scent','smell','note','parentId'].some(key => active[key]?.trim()) || active.uploads.length || active.selected.length) {
+  if (existing || ['title','journal','poem','prompt','scent','smell','note','parentId'].some(key => active[key]?.trim()) || active.uploads.length || active.selected.length || active.sourceFiles?.length) {
     const draft = {...active, updated:now()};
     const entries = [draft, ...state.entries.filter(entry => entry.id !== draft.id)];
     return persist({...state, entries});
@@ -732,6 +732,7 @@ function startPanel() {
   const prompts = {journal:senses[active.sense]?.[1] || 'What do you want to remember?',poem:'Write or paste your lines…',images:'Warm window light, a box on the floor, a quiet room…'};
   return `<section class="panel flow-write-panel"${active.mode === 'images' ? '' : ` data-node-id="${active.mode === 'journal' ? '27:496' : '27:516'}"`}>
     <div class="mode-grid" aria-label="How to start">${Object.entries(modes).map(([value,[title,hint]]) => `<button class="mode" type="button" data-action="mode" data-value="${value}" aria-pressed="${active.mode===value}"><strong>${title}</strong><small>${hint}</small></button>`).join('')}</div>
+    ${attachmentLinks(active)}
     ${field('title','Page title',active.title,{placeholder:'Give this memory a name',max:90})}
     ${field(key,active.mode === 'images' ? 'Image prompt' : label,active[key],{placeholder:prompts[active.mode],area:true,tall:true})}
     ${active.mode !== 'images' ? `<label class="flow-import">${icon('up')}<span>Import a text file</span><input id="import-writing" type="file" accept=".txt,.md,text/plain,text/markdown"></label>` : ''}
@@ -764,6 +765,7 @@ function imageOption(item) {
 function mediaPanel() {
   const options = [...new Set([...active.generated,...active.selected.filter(id => artworkById(id))])].map(artworkById);
   return `<section class="panel">
+    ${attachmentLinks(active)}
     <h3>Bring your keepsakes</h3>
     <p class="small">Add photos, screenshots, or pictures of found objects. Choose up to three for this page.</p>
     <div class="field" style="margin-top:10px"><label for="upload">Upload images</label>
@@ -819,16 +821,16 @@ function collagePanel() {
 function renderWritingChoice() {
   const uploading = active.stage === 'import';
   const label = active.mode === 'images' ? 'Collages' : active.mode === 'poem' ? 'Poem' : 'Journal';
-  const files = active.mode === 'images' ? active.uploads : (active.sourceFiles || []);
+  const files = active.sourceFiles?.length ? active.sourceFiles : active.mode === 'images' ? active.uploads : [];
   main.innerHTML = `<div class="wrap view writing-choice-view">
     ${uploading ? button('writing-choice','Back to choices','link','','back') : backLink('#create','Back to Create New')}
     <div class="writing-object-scene">
       <h1>${label}</h1>
       ${uploading ? '' : `<button class="writing-object" data-action="writing-prompt"><canvas class="sense-model" data-sense-model="typewriter" aria-hidden="true"></canvas><span>Write Prompt</span></button>`}
-      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span class="upload-plus" aria-hidden="true">+</span><input aria-label="Upload files" id="choice-upload" type="file" multiple accept="${active.mode === 'images' ? 'image/*' : '.txt,.md,text/plain,text/markdown'}"></label><span>Upload</span><span class="field-help">${active.mode === 'images' ? 'Photos or images · up to 5' : 'Text or Markdown files'}</span>${files.length === 1 ? `<small class="upload-file-status" role="status">${esc(files[0].name)} uploaded</small>` : ''}</div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
-      ${uploading && files.length > 1 ? `<div class="imported-papers" role="region" tabindex="0" aria-label="Uploaded file previews. Scroll to browse.">${files.map(file=>`<article class="imported-paper">${file.src ? `<img src="${esc(file.src)}" alt="${esc(file.name)}">` : `<p>${esc(file.preview || 'Text imported into your draft.')}</p>`}<span>${esc(file.name)}</span></article>`).join('')}</div>` : ''}
+      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><input aria-label="Upload files" id="choice-upload" type="file" multiple></label><span>Upload</span>${files.length === 1 ? `<small class="upload-file-status" role="status">${esc(files[0].name)} uploaded</small>` : ''}</div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
+      ${uploading && files.length > 1 ? `<div class="imported-papers" role="region" tabindex="0" aria-label="Uploaded file previews. Scroll to browse.">${files.map(file=>`<article class="imported-paper">${file.src ? `<img src="${esc(file.src)}" alt="${esc(file.name)}">` : `<p>${esc(file.preview || 'Original file attached.')}</p>`}<span>${esc(file.name)}</span></article>`).join('')}</div>` : ''}
     </div>
-    ${uploading ? `<button class="btn flow-continue" data-action="writing-open" ${files.length ? '' : 'disabled'}>Continue ${icon('arrow')}</button>` : ''}
+    ${uploading ? `${attachmentLinks(active)}<button class="btn flow-continue" data-action="writing-open" ${files.length ? '' : 'disabled'}>Continue ${icon('arrow')}</button>` : ''}
   </div>`;
   window.KaoruSenses.mount(main.querySelector('.writing-object-scene'));
   const wheel = main.querySelector('.imported-papers');
@@ -846,22 +848,78 @@ function renderWritingChoice() {
     requestAnimationFrame(shape);
   }
 }
-async function importChoiceFiles(input) {
-  if (active.mode === 'images') { await uploadFiles(input.files); return; }
-  const target = active, key = modes[target.mode][2];
-  const files = [...input.files];
-  if (!files.length) return;
-  if (files.some(file => file.size > 64*1024)) { message('Choose text files smaller than 64 KB.'); return; }
+let attachmentDatabase;
+function openAttachments() {
+  if (!attachmentDatabase) attachmentDatabase = new Promise((resolve,reject) => {
+    const request = indexedDB.open('kaoru-attachments',1);
+    request.onupgradeneeded = () => request.result.createObjectStore('files');
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => { attachmentDatabase = null; reject(request.error); };
+  });
+  return attachmentDatabase;
+}
+async function storeAttachments(items) {
+  const db = await openAttachments();
+  return new Promise((resolve,reject) => {
+    const transaction = db.transaction('files','readwrite');
+    for (const item of items) transaction.objectStore('files').put(item.file,item.id);
+    transaction.oncomplete = resolve;
+    transaction.onabort = () => reject(transaction.error);
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+async function downloadAttachment(id) {
   try {
-    const texts = (await Promise.all(files.map(file=>file.text()))).map(value=>value.trim());
-    const text = texts.filter(Boolean).join('\n\n');
+    const db = await openAttachments();
+    const file = await new Promise((resolve,reject) => {
+      const request = db.transaction('files').objectStore('files').get(id);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    if (!file) { message('This attachment is not available in this browser.'); return; }
+    const url = URL.createObjectURL(file), link = document.createElement('a');
+    link.href = url; link.download = file.name; link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  } catch { message('This attachment could not be opened.'); }
+}
+function attachmentLinks(entry) {
+  const files = (entry.sourceFiles || []).filter(file=>file.id);
+  return files.length ? `<div class="attachment-links" aria-label="Attached files">${files.map(file=>button('download-attachment',file.name,'ghost',file.id)).join('')}</div>` : '';
+}
+async function importChoiceFiles(input) {
+  const target = active, key = modes[target.mode][2], files = [...input.files];
+  if (!files.length) return;
+  input.disabled = true;
+  try {
+    const items = await Promise.all(files.map(async file => {
+      const id=makeId(), note={id,name:file.name,type:file.type,size:file.size};
+      let text='', image;
+      if (file.type.startsWith('text/') || /\.(txt|md|csv|json|log)$/i.test(file.name)) {
+        text = (await file.slice(0,65536).text()).trim();
+        note.preview = text.slice(0,200);
+      } else if (file.type.startsWith('image/')) {
+        try { image=await resizeImage(file); note.src=image.src; } catch { /* Keep the original even when a thumbnail cannot be decoded. */ }
+      }
+      if (!note.preview && !note.src) note.preview = `${file.name.split('.').pop().toUpperCase()} file · Original attached`;
+      return {id,file,note,text,image};
+    }));
     if (active !== target) return;
-    const combined = [target[key],text].filter(Boolean).join('\n\n');
-    if (!text || combined.length > 2400) { message('Choose files with up to 2,400 characters combined.'); return; }
-    target[key] = combined;
-    target.sourceFiles = [...(target.sourceFiles || []),...files.map((file,i)=>({name:file.name,preview:texts[i].slice(0,200)}))];
-    rememberDraft(); render();
-  } catch { message('These files could not be read. Try plain text or Markdown.'); }
+    await storeAttachments(items);
+    if (active !== target) return;
+    const previous={sourceFiles:target.sourceFiles,uploads:[...target.uploads],selected:[...target.selected],[key]:target[key]};
+    target.sourceFiles=[...(target.sourceFiles || []),...items.map(item=>item.note)];
+    const text=items.map(item=>item.text).filter(Boolean).join('\n\n');
+    const combined=[target[key],text].filter(Boolean).join('\n\n');
+    if (text && combined.length<=2400 && target.mode!=='images') target[key]=combined;
+    if (target.mode==='images') {
+      const pictures=items.map(item=>item.image).filter(Boolean).slice(0,Math.max(0,5-target.uploads.length));
+      target.uploads.push(...pictures);
+      target.selected.push(...pictures.slice(0,Math.max(0,3-target.selected.length)).map(item=>item.id));
+    }
+    if (!rememberDraft()) Object.assign(target,previous);
+    render();
+  } catch { message('The files could not be saved. Check available browser storage and try again.'); }
+  finally { input.disabled=false; input.value=''; }
 }
 
 function renderWizard(id) {
@@ -1159,6 +1217,7 @@ function carryLine(value) {
   if (line) newDraft({parentId:id,note:line.slice(0,110)});
 }
 const actions = {
+  'download-attachment':id => { void downloadAttachment(id); },
   'writing-choice':() => { active.stage='choose'; render(); },
   'writing-upload':() => { active.stage='import'; render(); },
   'writing-prompt':() => { active.stage='start'; render(); },

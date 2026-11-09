@@ -508,10 +508,10 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .sense-nose{left:47.95%;top:51.22%;width:13.23%;height:20.98%}
 .sense-lips{left:64.68%;top:40%;width:19.84%;height:21.08%}
 .sense-caption{
-  position:absolute;top:20.7%;left:var(--home-center);transform:translateX(-50%);
+  position:absolute;top:22%;left:var(--home-center);transform:translateX(-50%);padding:4px 8px;
   display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.5cqw,22px);
   width:max-content;max-width:calc(100% - 28px);color:#666;
-  font:italic 400 clamp(11px,1.02cqw,15px)/1.2 var(--entries-type);
+  font:italic 400 clamp(10px,.9cqw,13px)/1.35 var(--entries-type);
 }
 .sense-caption a{color:var(--navy);text-decoration:underline;text-underline-offset:3px}
 .home-create{position:absolute;top:var(--scene-center-y);left:var(--home-center);transform:translate(-50%,-50%);text-align:center;width:min(86%,410px)}
@@ -568,7 +568,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .sense-hand{left:16%;top:54%;width:25%;height:14%}
   .sense-nose{left:45%;top:49%;width:24%;height:17%}
   .sense-lips{left:72%;top:48%;width:22%;height:15%}
-  .sense-caption{top:22.6%}
+  .sense-caption{top:24%}
   .home-next{top:75.4%}
 }
 @media(max-height:560px){
@@ -897,8 +897,9 @@ html:has(#main > .view){height:100%;overflow:hidden}
 .writing-object:hover .sense-model{filter:drop-shadow(0 9px 8px #29282148)}
 .upload-model{position:relative;display:block;cursor:pointer}
 .upload-model input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-.upload-object:focus-within{outline:2px solid var(--ink);outline-offset:8px}
-.upload-plus{position:absolute;top:42%;font:300 34px/1 Lekton,monospace;pointer-events:none}
+.upload-object:focus-within{outline:none;box-shadow:none}
+.upload-object:focus-within .sense-model{filter:drop-shadow(0 0 5px #28375888) drop-shadow(0 8px 8px #29282138)}
+
 .imported-papers{display:flex;flex-direction:column;gap:18px;width:180px;max-height:45dvh;overflow:auto;padding:18px;flex-shrink:1}
 .imported-paper{display:flex;align-items:center;justify-content:center;gap:8px;flex-shrink:0;min-height:60px;background:#f1eee8;border-radius:6px;padding:12px;transform:rotate(var(--paper-turn,-9deg));font:14px/1.3 Lekton,monospace;overflow-wrap:anywhere}
 .imported-paper img{width:45px;height:45px;object-fit:cover}
@@ -939,3 +940,15 @@ html:has(#main > .view){height:100%;overflow:hidden}
 .imported-paper img{width:100%;height:55px;object-fit:cover}
 @media(max-width:650px){.imported-papers{width:165px;height:240px;max-height:30dvh;padding-block:calc((min(240px,30dvh) - var(--preview-height))/2)}}
 @media(prefers-reduced-motion:reduce){.imported-paper{transition:none}}
+
+.upload-object{gap:0}
+.upload-object > span{margin-top:-32px;position:relative;pointer-events:none}
+.upload-object .upload-file-status{margin-top:12px}
+.attachment-links{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-height:72px;overflow:auto;margin:8px 0}
+.attachment-links .btn{font-size:12px;min-height:28px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.deck-front{padding:clamp(18px,3cqw,46px) clamp(16px,2.6cqw,40px);grid-template-rows:auto minmax(0,1fr) auto;gap:8px}
+.deck-front .front-caption{align-self:start;padding-bottom:0;width:100%;min-width:0}
+.deck-front .front-caption h2{font-size:clamp(18px,2.15cqw,32px)}
+.deck-front .front-actions{min-height:0;width:100%;align-self:center}
+.deck-front .front-scent{align-self:end;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:650px){.upload-object > span{margin-top:-18px}}
