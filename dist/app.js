@@ -142,15 +142,15 @@ function renderHeader(page) {
   if (page === 'diary') { header.innerHTML = ''; return; }
   header.innerHTML = `<div class="wrap bar">
     <a href="#diary" class="brand" aria-label="Kaoru home. Keep what lingers.">
-      <span class="brand-mark">${icon('scent')}kaoru.</span>
-      <span class="brand-slogan">Keep what lingers.</span>
+      <span class="brand-mark">Kaoru</span>
+      <span class="brand-slogan">keep what lingers</span>
     </a>
     <nav class="nav" aria-label="Main navigation">
-      <a href="#diary"${page === 'diary' ? ' aria-current="page"' : ''}>Diary</a>
+      <a href="#diary">Entries</a>
       <a href="#scents"${['scents','scent'].includes(page) ? ' aria-current="page"' : ''}>Scent index</a>
+      <a href="#create"${['create','edit','sense-select','capture','reuse-sense','captured'].includes(page) ? ' aria-current="page"' : ''}>Create New</a>
       <a href="#saved"${page === 'saved' ? ' aria-current="page"' : ''}>Saved</a>
     </nav>
-    <div class="bar-end"><span class="eyebrow">Prototype</span>${button('new','New page','primary','','plus')}</div>
   </div>`;
 }
 function photos(entry) {
@@ -263,7 +263,7 @@ function categoryGallery(list, index) {
     const action = entry.status === 'draft' ? 'resume' : 'entry-poem';
     return `<button class="poem-card" type="button" data-action="${action}" data-value="${esc(entry.id)}" aria-label="Open poem: ${title}">
       <span class="poem-flight">
-        <img src="assets/entries/origami-bird.png" width="450" height="452" alt="">
+        <span class="poem-silhouette"><img src="assets/entries/origami-bird.png" width="450" height="452" alt=""></span>
         <span class="poem-tether"><span class="poem-tag"><span>${title}</span></span></span>
       </span>
     </button>`;
@@ -437,6 +437,77 @@ function backLink(href,label = 'Back to diary') {
 function viewTitle(tag,title,description = '') {
   return `<div class="view-title"><p class="kicker">${esc(tag)}</p><h1>${esc(title)}</h1>${description ? `<p>${esc(description)}</p>` : ''}</div>`;
 }
+const createChoices = [
+  ['journal','Journal','Write or import a memory'],
+  ['poem','Poem','Write or import your lines'],
+  ['images','Collages','Start with images or a prompt'],
+  ['senses','Senses','Capture or reuse a sense']
+];
+function senseRecords() {
+  const captured = state.senseNotes || [];
+  const existing = allScents()
+    .filter(item => !captured.some(note => note.type === 'nose' && normalize(note.name) === item.key))
+    .map(item => ({id:'scent:'+item.key,type:'nose',name:item.label,detail:''}));
+  return [...captured,...existing];
+}
+function renderCreate(reference) {
+  const note = senseRecords().find(item => item.id === reference);
+  main.innerHTML = `<div class="wrap view choice-view" data-node-id="20:283">
+    ${backLink('#diary')}
+    ${viewTitle('Begin a page','Create New',note ? 'Carrying ' + note.name + ' into this page.' : 'What would you like to start with?')}
+    <form id="create-flow" data-reference="${esc(reference)}">
+      <fieldset class="flow-choices" aria-label="How to start">
+        ${createChoices.map(([value,label,hint],i) => `<label class="flow-choice">
+          <input type="radio" name="start" value="${value}"${i === 0 ? ' checked' : ''}>
+          <span class="flow-tile"><strong>${label}</strong><small>${hint}</small></span>
+        </label>`).join('')}
+      </fieldset>
+      <button type="submit" class="btn flow-continue">Continue ${icon('arrow')}</button>
+    </form>
+  </div>`;
+}
+function renderSenseSelect(type) {
+  main.innerHTML = `<div class="wrap view choice-view" data-node-id="26:470">
+    ${backLink(route('create',type),'Back to Create New')}
+    ${viewTitle('Begin with a sense','Sense Selection','Capture a detail from this moment or return to one you kept.')}
+    <div class="flow-choices sense-choices">
+      <a class="flow-tile" href="${route('capture',type)}"><strong>Capture a new sense</strong><small>Describe a sensory experience</small></a>
+      <a class="flow-tile" href="#reuse-sense"><strong>Reuse an existing sense</strong><small>Browse saved senses and scents</small></a>
+    </div>
+  </div>`;
+}
+function renderCapture(type) {
+  main.innerHTML = `<div class="wrap view" data-node-id="20:291">
+    ${backLink(route('sense-select',type),'Back to Sense Selection')}
+    ${viewTitle('A sensory detail','Capture New Senses','Describe what you noticed in your own words.')}
+    <form id="capture-sense" class="panel flow-narrow">
+      <div class="field"><label for="capture-type">Sense</label>
+        <select id="capture-type" name="type">${Object.entries(senses).map(([key,[label]]) => `<option value="${key}"${key === (senses[type] ? type : 'nose') ? ' selected' : ''}>${label}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label for="capture-name">Short name</label><input id="capture-name" name="name" placeholder="Wet pavement, warm linen, the sound of rain…" maxlength="55" required></div>
+      <div class="field"><label for="capture-detail">What did you notice?</label><textarea id="capture-detail" name="detail" placeholder="Describe the moment…" maxlength="220" required></textarea></div>
+      <button type="submit" class="btn flow-continue">Capture sense ${icon('arrow')}</button>
+    </form>
+  </div>`;
+}
+function renderReuseSenses() {
+  const notes = senseRecords();
+  main.innerHTML = `<div class="wrap view">
+    ${backLink('#sense-select','Back to Sense Selection')}
+    ${viewTitle('Return to a detail','Reuse a Sense','Choose a captured sense or a scent from your diary.')}
+    ${notes.length ? `<div class="index-grid">${notes.map(note => `<a class="index-card sense-record" href="${route('captured',note.id)}"><div><p class="eyebrow">${senses[note.type][0]}</p><h3>${esc(note.name)}</h3></div>${icon('arrow')}</a>`).join('')}</div>` : empty('No senses yet','Capture a detail to find it here.',backLink('#capture','Capture a sense'))}
+  </div>`;
+}
+function renderCaptured(id) {
+  const note = senseRecords().find(item => item.id === id);
+  main.innerHTML = `<div class="wrap view choice-view" data-node-id="24:457">
+    ${backLink('#sense-select','Back to Sense Selection')}
+    ${note ? `${viewTitle('A detail to keep','Sense ready')}
+      <div class="captured-sense"><span class="eyebrow">${senses[note.type][0]}</span><h2>${esc(note.name)}</h2>${note.detail ? `<p>${esc(note.detail)}</p>` : ''}</div>
+      <a class="btn flow-continue" href="${route('create',note.id)}">Continue to Create New ${icon('arrow')}</a>`
+    : empty('Sense unavailable','Choose a saved sense or capture a new one.') }
+  </div>`;
+}
 function openEntry(id, tab) {
   detailId = id;
   detailTab = tab;
@@ -476,10 +547,10 @@ function renderDetail(id) {
   const source = entry.parentId && itemById(entry.parentId);
   const contents = detailTab === 'scene'
     ? `${entry.smell ? `<p class="entry-text">${esc(entry.smell)}</p>` : '<p class="entry-text small">A page from your visual diary.</p>'}${entry.scent ? scentChip(entry.scent) : ''}`
-    : `<p class="entry-text ${detailTab === 'poem' ? 'poetry' : ''}">${esc(entry[detailTab])}</p>`;
+    : `<p class="entry-text ${detailTab === 'poem' ? 'poetry' : 'journal-text'}">${esc(entry[detailTab])}</p>`;
   main.innerHTML = `<div class="wrap view">${backLink('#diary')}
     ${viewTitle(dateLabel(entry.created),entry.title || 'Untitled memory')}
-    <div class="detail-grid">${scene(entry,true)}
+    <div class="detail-grid${detailTab !== 'scene' ? ' detail-reading' : ''}">${detailTab === 'scene' ? scene(entry,true) : ''}
       <section class="detail-panel">
         <div class="filters">${tabs.map(([key,label]) => `<button type="button" class="chip" data-action="detail-tab" data-value="${key}" aria-pressed="${detailTab === key}">${label}</button>`).join('')}</div>
         ${contents}
@@ -503,8 +574,8 @@ function renderDetail(id) {
 
 const steps = [['start','Memory'],['poem','Poem'],['media','Images'],['collage','Collage']];
 const modes = {
-  journal:['Journal','Write or paste a memory','journal'],
-  poem:['Poem','Bring a poem of your own','poem'],
+  journal:['Journal','Write or import a memory','journal'],
+  poem:['Poem','Write or import your lines','poem'],
   images:['Images','Start with a visual prompt','prompt']
 };
 function field(name,label,value,{placeholder='',hint='',area=false,tall=false,max=2400} = {}) {
@@ -528,10 +599,12 @@ function captureFields() {
 function startPanel() {
   const [label,,key] = modes[active.mode];
   const prompts = {journal:senses[active.sense]?.[1] || 'What do you want to remember?',poem:'Write or paste your lines…',images:'Warm window light, a box on the floor, a quiet room…'};
-  return `<section class="panel">
+  return `<section class="panel flow-write-panel"${active.mode === 'images' ? '' : ` data-node-id="${active.mode === 'journal' ? '27:496' : '27:516'}"`}>
     <div class="mode-grid" aria-label="How to start">${Object.entries(modes).map(([value,[title,hint]]) => `<button class="mode" type="button" data-action="mode" data-value="${value}" aria-pressed="${active.mode===value}"><strong>${title}</strong><small>${hint}</small></button>`).join('')}</div>
     ${field('title','Page title',active.title,{placeholder:'Give this memory a name',max:90})}
     ${field(key,active.mode === 'images' ? 'Image prompt' : label,active[key],{placeholder:prompts[active.mode],area:true,tall:true})}
+    ${active.mode !== 'images' ? `<label class="flow-import">${icon('up')}<span>Import a text file</span><input id="import-writing" type="file" accept=".txt,.md,text/plain,text/markdown"></label>` : ''}
+    ${active.senseDetail ? `<p class="sense-carry">${esc(active.senseDetail)}</p>` : ''}
     <hr class="separation">
     ${captureFields()}
     <div class="editor-actions">
@@ -617,7 +690,9 @@ function renderWizard(id) {
     active = structuredClone(draft);
   }
   const config = {
-    start:['Make a new page','Begin with a memory, a poem, or a visual idea.',startPanel],
+    start:active.mode === 'journal' ? ['Journal','Write a memory or import a text file.',startPanel]
+      : active.mode === 'poem' ? ['Poem','Write your lines or bring in a poem of your own.',startPanel]
+      : ['Collage','Begin with a visual idea.',startPanel],
     poem:['Find the lines','Shape the words you want to carry into the collage.',poemPanel],
     media:['Gather the images','Combine your keepsakes with a few image ideas.',mediaPanel],
     collage:['Make it yours','Arrange the page and see how it will look in your diary.',collagePanel]
@@ -637,7 +712,12 @@ function render(focus = false) {
     active = null;
   }
   renderHeader(page);
-  if (page === 'edit') renderWizard(id);
+  if (page === 'create') renderCreate(id);
+  else if (page === 'sense-select') renderSenseSelect(id);
+  else if (page === 'capture') renderCapture(id);
+  else if (page === 'reuse-sense') renderReuseSenses();
+  else if (page === 'captured') renderCaptured(id);
+  else if (page === 'edit') renderWizard(id);
   else if (page === 'entry') renderDetail(id);
   else if (page === 'scents') renderIndex();
   else if (page === 'scent') renderScent(id);
@@ -650,6 +730,40 @@ function newDraft(values = {}) {
   active = {...fresh(), ...values};
   go('edit',active.id);
 }
+function beginCreation(form) {
+  const mode = new FormData(form).get('start');
+  const reference = form.dataset.reference;
+  const note = senseRecords().find(item => item.id === reference);
+  const sense = note?.type || (Object.hasOwn(senses,reference) ? reference : '');
+  if (mode === 'senses') {
+    go('sense-select',sense);
+    return;
+  }
+  const values = {mode,sense};
+  if (note?.type === 'nose') {
+    values.scent = note.name;
+    values.smell = note.detail;
+  } else if (note) {
+    values.senseDetail = note.detail;
+  }
+  if (mode === 'images') {
+    values.stage = 'media';
+    values.skippedPoem = true;
+  }
+  newDraft(values);
+}
+function captureSense(form) {
+  const fields = new FormData(form);
+  const type = fields.get('type');
+  const name = fields.get('name').trim();
+  const detail = fields.get('detail').trim();
+  if (!Object.hasOwn(senses,type) || !name || !detail) {
+    message('Add a short name and a detail for this sense.');
+    return;
+  }
+  const note = {id:makeId(),type,name,detail};
+  if (persist({...state,senseNotes:[note,...(state.senseNotes || [])]})) go('captured',note.id);
+}
 function advance(stage) {
   const previous = active.stage;
   active.stage = stage;
@@ -658,7 +772,7 @@ function advance(stage) {
 }
 function draftPoem() {
   const source = active.journal.trim().split(/[.!?\n]/)[0].split(/\s+/).slice(0,10).join(' ');
-  const scent = active.smell.trim() || active.scent.trim();
+  const scent = (active.smell.trim() || active.scent.trim()).replace(/[.!?]+$/,'');
   const patterns = scent ? [
     [source + '.', 'The air still held ' + scent + '.', 'I carried a little of it home.'],
     ['There was ' + scent + ' in the air.', source + '.', 'Some things stay after the room goes quiet.'],
@@ -671,7 +785,7 @@ function draftPoem() {
   active.poem = patterns[active.version++ % patterns.length].join('\n');
 }
 function imageIdeas() {
-  const text = normalize([active.scent,active.smell,active.prompt,active.journal,active.poem].join(' '));
+  const text = normalize([active.scent,active.smell,active.senseDetail,active.prompt,active.journal,active.poem].join(' '));
   const matches = [/orange|citrus|kitchen|sunlight|peel/,/glass|drink|friend|dusk/,/rain|water|pavement|window|café|cafe/];
   active.generated = artwork.map((item,i) => [item.id,matches[i].test(text) ? 1 : 0])
     .sort((a,b) => b[1]-a[1]).map(([id]) => id);
@@ -761,6 +875,34 @@ async function uploadFiles(files) {
   else if (files.length > available) message('You can keep up to five uploads per draft.');
   render();
 }
+async function importWriting(input) {
+  const file = input.files[0];
+  const target = active;
+  if (!file || !target || target.mode === 'images') return;
+  const key = modes[target.mode][2];
+  const field = document.getElementById(key);
+  if (file.size > 64 * 1024) {
+    message('Choose a smaller text file for this page.');
+    input.value = '';
+    return;
+  }
+  try {
+    const text = (await file.text()).trim();
+    if (active !== target || !field.isConnected) return;
+    const combined = [field.value.trimEnd(),text].filter(Boolean).join('\n\n');
+    if (!text || combined.length > field.maxLength) {
+      message(text ? 'This text is too long for the writing field.' : 'The file has no text to import.');
+      return;
+    }
+    target[key] = field.value = combined;
+    if (rememberDraft()) message('Text imported.');
+    field.focus();
+  } catch {
+    message('This file could not be read. Try a plain text file.');
+  } finally {
+    input.value = '';
+  }
+}
 function requireText(key,notice) {
   if (active[key].trim()) return true;
   message(notice);
@@ -782,7 +924,7 @@ const actions = {
   'home-view':value => selectHomeView(Number(value)),
   'home-turn':value => rotateHome(Number(value)),
   'pick-sense':selectSense,
-  'new-from-sense':() => newDraft(homeSense ? {sense:homeSense} : {}),
+  'new-from-sense':() => go('create',homeSense),
   'new-scent':scent => newDraft({scent}),
   filter:value => {
     filter = value;
@@ -894,6 +1036,7 @@ document.addEventListener('input', event => {
 });
 document.addEventListener('change', event => {
   if (event.target.id === 'upload' && active) void uploadFiles(event.target.files);
+  if (event.target.id === 'import-writing') void importWriting(event.target);
   if (event.target.dataset.field && active) rememberDraft();
 });
 document.addEventListener('focusout', event => {
@@ -901,6 +1044,12 @@ document.addEventListener('focusout', event => {
   if (form && !form.contains(event.relatedTarget)) setSearchExpanded(form,false);
 });
 document.addEventListener('submit', event => {
+  if (event.target.id === 'create-flow' || event.target.id === 'capture-sense') {
+    event.preventDefault();
+    if (event.target.id === 'create-flow') beginCreation(event.target);
+    else captureSense(event.target);
+    return;
+  }
   if (event.target.id !== 'entries-search') return;
   event.preventDefault();
   if (!query.trim()) {
