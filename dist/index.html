@@ -6,12 +6,14 @@
   <meta name="theme-color" content="#f7f5ed">
   <meta name="description" content="A diary for the things that stay with you. Turn a memory into poetry and collage, then find it again by scent.">
   <title>Kaoru — A diary of what lingers</title>
-  <link rel="stylesheet" href="style.css?v=20261109-clean-scroll">
-  <script src="senses.js?v=20261109-clean-scroll" defer></script>
-  <script src="app.js?v=20261109-clean-scroll" defer></script>
+  <script src="theme.js?v=20261109-light-switch"></script>
+  <link rel="stylesheet" href="style.css?v=20261109-light-switch">
+  <script src="senses.js?v=20261109-light-switch" defer></script>
+  <script src="app.js?v=20261109-light-switch" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
+  <button id="light-switch" class="light-switch" type="button" role="switch" aria-label="Room light" aria-checked="true" title="Turn the light off"><svg viewBox="0 0 24 28" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path class="bulb-rays" d="M12 1v2M2 6l2 1M22 6l-2 1M1 14h2M23 14h-2"/><path class="bulb-glass" d="M8 21v-2c0-2-3-3-3-7a7 7 0 0 1 14 0c0 4-3 5-3 7v2z"/><path d="M8 24h8M10 27h4M10 13l2 2 2-2M12 15v6"/></svg></button>
   <header id="header"></header>
   <main id="main" tabindex="-1"></main>
   <div id="toast" role="status" aria-live="polite"></div>

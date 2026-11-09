@@ -930,3 +930,60 @@ html:has(#main > .view){height:100%;overflow:hidden}
 
 .journal-leaf-paper{height:clamp(140px,28dvh,210px);aspect-ratio:auto;overflow:hidden}
 .journal-leaf-text{flex:none;-webkit-line-clamp:4}
+
+/* A quiet room light, shared by every page. */
+.light-switch{position:fixed;z-index:100;top:clamp(20px,7dvh,52px);right:clamp(20px,7vw,110px);width:44px;height:44px;display:grid;place-items:center;padding:9px;border:0;border-radius:50%;color:#69738a;background:transparent;transition:background .25s,color .25s}
+.light-switch svg{width:23px;height:28px}
+.light-switch:hover{background:#2833510a;color:#283351}
+.light-switch .bulb-glass{fill:#f4e9cb66;transition:fill .45s}
+.light-switch .bulb-rays{transition:opacity .3s}
+body,.entries-home,#header{transition:background-color .55s ease,color .45s ease}
+html[data-theme=dark]{color-scheme:dark;background:#191f30}
+html[data-theme=dark] body,html[data-theme=dark] body:has(#main > .view){--ink:#e6e4db;--sub:#b0b4c1;--paper:#191f30;--soft:#242c40;--line:#434b5f;--olive:#aab9d6;--moss:#303b53;--rust:#c3b39c;background:var(--paper);color:var(--ink)}
+[data-theme=dark] .entries-home{--navy:#d0d9ed;background:#191f30;color:#e6e4db}
+[data-theme=dark] .light-switch{color:#c9d3e7}
+[data-theme=dark] .light-switch:hover{background:#eee9da12;color:#f4e5be}
+[data-theme=dark] .light-switch .bulb-glass{fill:transparent}
+[data-theme=dark] .light-switch .bulb-rays{opacity:0}
+[data-theme=dark] :is(.brand-slogan,.entries-logo p,.sense-caption,.home-create p,.category-pages){color:#b0b4c1}
+[data-theme=dark] .entries-filters button{color:#a9aebb}
+[data-theme=dark] .entries-filters button:is(:hover,[aria-pressed=true]){color:#f3ede0}
+[data-theme=dark] .deck-front{background:#303d5d;box-shadow:7px 10px 24px #0005}
+[data-theme=dark] .deck-sheet{background:#354056}
+[data-theme=dark] .deck-sheet-control{color:#e1e1db}
+[data-theme=dark] .entries-search{background:#2a3246;color:#e6e4db}
+[data-theme=dark] .entries-search input::placeholder{color:#b5b8c0}
+[data-theme=dark] .home-motif{opacity:.55}
+[data-theme=dark] .poem-tag{color:#283351}
+[data-theme=dark] .poem-card:focus-visible .poem-tag{background:#aab9d6;color:#191f30}
+[data-theme=dark] :is(.flow-tile,.sense-choices .flow-tile,.view .mode,.view .chip,.view .index-card,.flow-import){background:#293247;color:#e6e4db}
+[data-theme=dark] :is(.flow-tile:hover,.flow-choice input:checked + .flow-tile,.view .chip[aria-pressed=true]){background:#3b4964;color:#fff6e8;border-color:#8a9ab9}
+[data-theme=dark] .btn.primary{background:#485b7e;color:#fff6e8;border-color:#667899}
+[data-theme=dark] .btn.primary:hover{background:#576c93}
+[data-theme=dark] :is(.field input:not([type=range]),.field textarea,.field select,.sense-naming-form #capture-name,.sense-naming-form #sense-memory-detail,.sense-capture-form #capture-detail){background:#283146;color:#ece8dc}
+[data-theme=dark] .sense-capture-prompt{color:#d0d9ed}
+[data-theme=dark] .sense-capture-prompt small{color:#b0b4c1}
+[data-theme=dark] .imported-paper{background:#30394b;color:#ece8dc}
+[data-theme=dark] .detail-reading .detail-panel{background-color:#e8e3d7;color:#303344}
+[data-theme=dark] .detail-reading .detail-panel .btn{color:#283351}
+[data-theme=dark] :focus-visible{outline-color:#d7c49f}
+@media(max-width:650px){.light-switch{top:20px;right:20px}}
+@media(prefers-reduced-motion:reduce){body,.entries-home,#header,.light-switch,.light-switch .bulb-glass,.light-switch .bulb-rays{transition:none}}
+
+/* All and Recent preserve the visual form of each entry. */
+.mixed-home{gap:4%;width:92%}
+.mixed-entry{position:relative;width:28%;min-width:0;flex:none}
+.mixed-entry:nth-child(1){translate:0 5%}
+.mixed-entry:nth-child(2){translate:0 -12%}
+.mixed-entry:nth-child(3){translate:0 -4%}
+.mixed-entry > .poem-card{width:100%;max-width:none;translate:none}
+.mixed-entry > .collage-card{width:100%;height:clamp(140px,27dvh,210px);grid-column:auto;animation:poem-flight 10s ease-in-out -3s infinite;--float-x:5px;--float-y:8px}
+.mixed-entry .collage-card-title{white-space:normal;line-height:1.3;font-size:13px}
+.mixed-entry .collage-card-art{height:100%;box-shadow:0 5px 15px #0002}
+.mixed-complete{position:absolute;left:50%;top:calc(100% + 68px);transform:translateX(-50%);white-space:nowrap;font:italic 12px Lekton,monospace;border:0;background:none;opacity:0;transition:opacity .25s;padding:4px;min-height:28px}
+.mixed-entry:hover .mixed-complete,.mixed-entry:focus-within .mixed-complete{opacity:1}
+@media(hover:none){.mixed-complete{opacity:1}}
+@media(prefers-reduced-motion:reduce){.mixed-entry > .collage-card{animation:none}}
+.mixed-entry > .collage-card:last-child:nth-child(odd){width:100%;grid-column:auto}
+
+[data-theme=dark] input::placeholder,[data-theme=dark] textarea::placeholder{color:#b7bac4;opacity:1}

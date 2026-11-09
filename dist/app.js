@@ -208,9 +208,24 @@ function filteredEntries() {
     return matches[filter] && (!q || normalize([entry.title,entry.journal,entry.poem,entry.scent,entry.smell,entry.prompt].join(' ')).includes(q));
   });
   if (filter === 'Recent') {
-    return list.sort((a,b) => Number(b.status === 'draft') - Number(a.status === 'draft') || b.updated.localeCompare(a.updated)).slice(0,6);
+    return alternateEntries(list.sort((a,b) => Number(b.status === 'draft') - Number(a.status === 'draft') || b.updated.localeCompare(a.updated)).slice(0,6));
   }
-  return list.sort(byDate);
+  const sorted = list.sort(byDate);
+  return filter === 'All' ? alternateEntries(sorted) : sorted;
+}
+function alternateEntries(list) {
+  const remaining = [...list], result = [];
+  const forms = ['poem','collage','journal'];
+  const supports = (entry,kind) => kind === 'poem' ? Boolean(entry.poem) : kind === 'collage' ? photos(entry).length > 0 : Boolean(entry.journal);
+  while (remaining.length) {
+    const desired = forms[result.length % forms.length];
+    let index = remaining.findIndex(entry => supports(entry,desired));
+    if (index < 0) index = 0;
+    const entry = remaining.splice(index,1)[0];
+    const previewKind = supports(entry,desired) ? desired : entry.kind || (entry.mode === 'poem' ? 'poem' : photos(entry).length ? 'collage' : 'journal');
+    result.push({...entry,previewKind});
+  }
+  return result;
 }
 function deckSheet(entry, slot) {
   const title = entry ? entry.title || 'Untitled memory' : 'New page +';
@@ -247,18 +262,20 @@ function frontSheet(entry) {
 function categoryGallery(list, index) {
   const isCollage = filter === 'Collages';
   const isJournal = filter === 'Journal';
+  const mixed = ['All','Recent'].includes(filter);
   const size = isCollage ? 4 : 3;
   const start = index - index % size;
   const end = start + size;
   const cards = list.slice(start,end).map(entry => {
     const title = esc(entry.title || 'Untitled memory');
-    if (isCollage) {
+    const kind = entry.previewKind || entry.kind || (entry.status === 'saved' || ['images','media','collage'].includes(entry.stage) || entry.mode === 'images' ? 'collage' : entry.mode === 'poem' ? 'poem' : 'journal');
+    if (isCollage || mixed && kind === 'collage') {
       return `<article class="collage-card">
-        <button class="collage-card-title" type="button" data-action="entry-collage" data-value="${esc(entry.id)}" aria-label="Open collage: ${title}">${title}</button>
+        <button class="collage-card-title" type="button" data-action="${entry.status === 'draft' ? 'resume' : 'entry-collage'}" data-value="${esc(entry.id)}" aria-label="Open collage: ${title}">${title}</button>
         <div class="collage-card-art">${scene(entry,true)}</div>
       </article>`;
     }
-    if (isJournal) {
+    if (isJournal || mixed && kind === 'journal') {
       return `<button class="poem-card journal-leaf" type="button" data-action="${entry.status === 'draft' ? 'resume' : 'entry-journal'}" data-value="${esc(entry.id)}" aria-label="Open journal: ${title}">
         <span class="poem-flight">
           <span class="journal-leaf-paper"><time>${dateLabel(entry.created)}</time><span class="journal-leaf-text">${esc(entry.journal || 'A memory waiting to be written…')}</span></span>
@@ -273,13 +290,13 @@ function categoryGallery(list, index) {
         <span class="poem-tether"><span class="poem-tag"><span>${title}</span></span></span>
       </span>
     </button>`;
-  }).join('');
+  }).map((card,i) => mixed ? `<div class="mixed-entry">${card}${list[start+i].status === 'draft' && canComplete(list[start+i]) ? button('complete-draft','Mark as Complete','mixed-complete',list[start+i].id,'arrow') : ''}</div>` : card).join('');
   const pages = list.length > size ? `<nav class="category-pages${isCollage ? '' : ' poem-pages'}" aria-label="${filter} pages">
     ${start > 0 ? iconButton(isCollage ? 'deck-select' : 'poem-page','Previous page',list[start-size].id,'back') : ''}
     <span class="${isCollage ? '' : 'entries-status'}">${start+1}–${Math.min(end,list.length)} of ${list.length}</span>
     ${end < list.length ? iconButton(isCollage ? 'deck-select' : 'poem-page','Next page',list[end].id,'arrow') : ''}
   </nav>` : '';
-  return `<div class="${isCollage ? 'collage-home' : isJournal ? 'poems-home journal-leaves' : 'poems-home'}">${cards}</div>${pages}`;
+  return `<div class="${isCollage ? 'collage-home' : isJournal ? 'poems-home journal-leaves' : mixed ? 'poems-home mixed-home' : 'poems-home'}">${cards}</div>${pages}`;
 }
 function renderEntries() {
   const list = filteredEntries();
@@ -288,7 +305,7 @@ function renderEntries() {
   deckEntryId = front?.id || '';
   const next = list.slice(index+1).concat(list.slice(0,index));
   const deck = document.querySelector('#entries');
-  const category = front && ['Journal','Collages','Poems'].includes(filter);
+  const category = Boolean(front);
   deck.setAttribute('aria-label',category ? filter : 'Switch between diary entries');
   if (category) {
     deck.removeAttribute('aria-roledescription');
@@ -315,7 +332,7 @@ async function turnPoemPage(id) {
   deck.dataset.paging = 'true';
   await birds.animate([{opacity:1},{opacity:0}],{duration:240,easing:'ease-in',fill:'forwards'}).finished;
   delete deck.dataset.paging;
-  if (!birds.isConnected || !['Poems','Journal'].includes(filter)) return;
+  if (!birds.isConnected || !['Poems','Journal','All','Recent'].includes(filter)) return;
   selectDeckEntry(id);
   deck.querySelector('.poems-home').animate([{opacity:0},{opacity:1}],{duration:420,easing:'ease-out'});
 }
