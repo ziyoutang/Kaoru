@@ -263,7 +263,7 @@ function categoryGallery(list, index) {
   const isCollage = filter === 'Collages';
   const isJournal = filter === 'Journal';
   const mixed = ['All','Recent'].includes(filter);
-  const size = isCollage ? 4 : 3;
+  const size = isCollage ? 2 : 3;
   const start = index - index % size;
   const end = start + size;
   const cards = list.slice(start,end).map(entry => {
