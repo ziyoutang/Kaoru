@@ -306,8 +306,9 @@ function renderDiary() {
       <span id="home-next-label">Senses</span>${icon('arrow')}
     </button>
     <form id="entries-search" class="entries-search" role="search">
-      <input id="search" type="search" placeholder="search for what you want...." value="${esc(query)}" aria-label="Search notes, poems, and scents">
-      <button type="submit" aria-label="Search diary"><img src="assets/entries/search-arrow.svg" width="28" height="15" alt="" data-node-id="18:248"><span class="search-hover-icon">${icon('search')}</span></button>
+      <button class="entries-search-trigger" type="button" data-action="open-search" aria-label="Open diary search" aria-controls="search">${icon('search')}</button>
+      <input id="search" type="search" placeholder="search for what you want...." value="${esc(query)}" aria-label="Search notes, poems, and scents" hidden>
+      <button class="entries-search-submit" type="submit" aria-label="Search diary" hidden><img src="assets/entries/search-arrow.svg" width="28" height="15" alt="" data-node-id="18:248"></button>
     </form>
     <div class="home-dock">
       <nav class="home-navigation" aria-label="Home views">
@@ -320,6 +321,14 @@ function renderDiary() {
     <p id="home-announcement" class="entries-status" role="status"></p>
   </section>`;
   renderEntries();
+}
+function setSearchExpanded(form, expanded) {
+  form.classList.toggle('is-expanded',expanded);
+  const input=form.querySelector('#search');
+  input.hidden=!expanded;
+  form.querySelector('.entries-search-submit').hidden=!expanded;
+  if (expanded) input.focus({preventScroll:true});
+  form.querySelector('.entries-search-trigger').hidden=expanded;
 }
 function rotateHome(direction) {
   const turntable = document.querySelector('.home-turntable');
@@ -722,12 +731,13 @@ const actions = {
     renderEntries();
     document.querySelector('#entries').focus({preventScroll:true});
   },
+  'open-search':() => setSearchExpanded(document.querySelector('#entries-search'),true),
   'clear-search':() => {
     query = '';
     deckEntryId = '';
     document.querySelector('#search').value = '';
     renderEntries();
-    document.querySelector('#search').focus();
+    setSearchExpanded(document.querySelector('#entries-search'),true);
   },
   'complete-draft':id => {
     const entry = itemById(id);
@@ -818,6 +828,10 @@ document.addEventListener('input', event => {
 document.addEventListener('change', event => {
   if (event.target.id === 'upload' && active) void uploadFiles(event.target.files);
   if (event.target.dataset.field && active) rememberDraft();
+});
+document.addEventListener('focusout', event => {
+  const form=event.target.closest('.entries-search.is-expanded');
+  if (form && !form.contains(event.relatedTarget)) setSearchExpanded(form,false);
 });
 document.addEventListener('submit', event => {
   if (event.target.id !== 'entries-search') return;
