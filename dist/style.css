@@ -1027,3 +1027,7 @@ html[data-theme=dark] body,html[data-theme=dark] body:has(#main > .view){--ink:#
 @media(max-width:650px){.mixed-home{gap:8%}.mixed-entry{width:25%}.mixed-entry .journal-leaf-paper{height:clamp(130px,24dvh,180px)}}
 @media(prefers-reduced-motion:reduce){.collage-home > .collage-card,.mixed-entry > .collage-card{animation:none}}
 .mixed-entry > .poem-card:not(.journal-leaf){--tag-x:65%;--tag-y:90%}
+
+.entries-deck:has(.poem-pages) .collage-home{bottom:0}
+.entries-deck:has(.collage-home) .poem-pages{right:calc((48cqw - 52.71cqw)/2 - 5%)}
+@media(max-width:700px){.entries-deck:has(.collage-home) .poem-pages{right:0}}

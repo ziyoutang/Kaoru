@@ -291,11 +291,11 @@ function categoryGallery(list, index) {
       </span>
     </button>`;
   }).map((card,i) => mixed ? `<div class="mixed-entry">${card}${list[start+i].status === 'draft' && canComplete(list[start+i]) ? button('complete-draft','Mark as Complete','mixed-complete',list[start+i].id,'arrow') : ''}</div>` : card).join('');
-  const pages = list.length > size ? `<nav class="category-pages${isCollage ? '' : ' poem-pages'}" aria-label="${filter} pages">
-    ${start > 0 ? iconButton(isCollage ? 'deck-select' : 'poem-page','Previous page',list[start-size].id,'back') : ''}
-    <span class="${isCollage ? '' : 'entries-status'}">${start+1}–${Math.min(end,list.length)} of ${list.length}</span>
-    ${end < list.length ? iconButton(isCollage ? 'deck-select' : 'poem-page','Next page',list[end].id,'arrow') : ''}
-  </nav>` : '';
+  const pages = `<nav class="category-pages poem-pages" aria-label="${filter} pages">
+    ${start > 0 ? iconButton('poem-page','Previous page',list[start-size].id,'back') : ''}
+    <span class="entries-status">${start+1}–${Math.min(end,list.length)} of ${list.length}</span>
+    ${iconButton('poem-page','Next page',list[end < list.length ? end : 0].id,'arrow',list.length <= size)}
+  </nav>`;
   return `<div class="${isCollage ? 'collage-home' : isJournal ? 'poems-home journal-leaves' : mixed ? 'poems-home mixed-home' : 'poems-home'}">${cards}</div>${pages}`;
 }
 function renderEntries() {
@@ -326,15 +326,15 @@ function renderEntries() {
 }
 async function turnPoemPage(id) {
   const deck = document.querySelector('#entries');
-  const birds = deck?.querySelector('.poems-home');
+  const birds = deck?.querySelector('.poems-home,.collage-home');
   if (!birds || deck.dataset.paging) return;
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) { selectDeckEntry(id); return; }
   deck.dataset.paging = 'true';
   await birds.animate([{opacity:1},{opacity:0}],{duration:240,easing:'ease-in',fill:'forwards'}).finished;
   delete deck.dataset.paging;
-  if (!birds.isConnected || !['Poems','Journal','All','Recent'].includes(filter)) return;
+  if (!birds.isConnected || !['Poems','Journal','All','Recent','Collages'].includes(filter)) return;
   selectDeckEntry(id);
-  deck.querySelector('.poems-home').animate([{opacity:0},{opacity:1}],{duration:420,easing:'ease-out'});
+  deck.querySelector('.poems-home,.collage-home').animate([{opacity:0},{opacity:1}],{duration:420,easing:'ease-out'});
 }
 async function selectDeckEntry(id) {
   const deck = document.querySelector('#entries');
