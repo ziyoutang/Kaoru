@@ -19,7 +19,7 @@ svg{width:20px;height:20px;flex:none}
 :focus-visible{outline:2px solid #8b4b32;outline-offset:4px}
 .skip{position:fixed;top:8px;left:8px;z-index:9;transform:translateY(-170%);padding:10px;background:white}
 .skip:focus{transform:none}
-.wrap{width:min(1160px,calc(100% - 64px));margin:auto}
+.wrap{width:min(1600px,92%);margin:auto}
 #header{position:relative;background:var(--paper)}
 .bar{display:grid;justify-items:center;gap:17px;padding-top:clamp(28px,6dvh,61px)}
 .brand{display:inline-grid;justify-items:center;gap:6px;color:var(--ink);font:400 clamp(33px,4vw,52px)/.95 Lekton,monospace}
@@ -94,8 +94,8 @@ main{min-height:80vh}
 .detail-panel .entry-text{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:16px}
 .detail-panel .poetry{font:italic 19px/1.55 var(--serif)}
 .detail-panel .actions{border-top:1px solid var(--line);padding-top:13px}
-.wizard{max-width:880px;margin:auto}
-.wizard.wide{max-width:1100px}
+.wizard{max-width:1120px;margin:auto}
+.wizard.wide{max-width:1440px}
 .progress{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;color:var(--sub);font-size:12px}
 .progress span{padding:5px 9px;border-bottom:2px solid var(--line)}
 .progress .current{border-color:var(--rust);color:var(--ink);font-weight:700}
@@ -157,7 +157,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .entries-home{
   --navy:#283351;--cream:#f3efe9;--entries-type:Inter,system-ui,sans-serif;--home-center:50%;--scene-center-y:48.5%;
   position:relative;isolation:isolate;container-type:inline-size;
-  width:min(100%,1512px,calc(100dvh * 1512 / 982));aspect-ratio:1512/982;margin:auto;overflow:clip;background:#fff;color:#1c1c1c;
+  width:min(100%,1920px);height:100dvh;margin:auto;overflow:clip;background:#fff;color:#1c1c1c;
 }
 .entries-logo{position:absolute;top:10.39%;left:var(--home-center);transform:translateX(-50%);text-align:center;white-space:nowrap}
 .entries-logo h1{font:400 clamp(32px,3.44cqw,52px)/.95 Lekton,monospace;letter-spacing:0;color:var(--navy)}
@@ -635,7 +635,7 @@ body:has(#main > .view){
 .flow-tile:hover,.flow-choice input:checked + .flow-tile{border-color:#737d94;background:#eeeff2}
 .choice-view .flow-continue{margin:clamp(18px,6dvh,63px) auto 0}
 .create-prompt{margin:clamp(13px,3dvh,30px) auto 0;text-align:center;color:var(--sub)}
-.create-choice-view .flow-choices{max-width:1000px;margin-top:clamp(23px,4.4dvh,42px)}
+.create-choice-view .flow-choices{width:100%;max-width:1440px;margin-top:clamp(23px,4.4dvh,42px)}
 .create-choice-view .flow-continue{margin-top:clamp(18px,4.4dvh,42px)}
 .flow-continue{
   display:flex;width:max-content;max-width:100%;margin:16px auto 0;border-color:transparent;
@@ -644,14 +644,14 @@ body:has(#main > .view){
 .flow-continue:hover{border-color:transparent;text-decoration:underline;text-underline-offset:4px}
 .flow-continue svg{width:17px;height:17px}
 .sense-choices{
-  max-width:940px;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;
+  width:90%;max-width:1240px;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;
   margin-top:clamp(28px,10dvh,100px);
 }
 .sense-choices .flow-tile{aspect-ratio:auto;min-height:clamp(260px,49dvh,520px);background:#e5e3de;padding:clamp(12px,2vw,28px)}
 .sense-orbit-art{display:block;width:86%;height:auto;max-height:265px}
-.sense-capture-form{position:relative;max-width:1080px;margin:clamp(22px,5dvh,55px) auto 0}
+.sense-capture-form{position:relative;max-width:1400px;margin:clamp(22px,5dvh,55px) auto 0}
 .sense-capture-prompt{text-align:center;color:var(--sub);font:italic 400 14px/1.4 Inter,system-ui,sans-serif;margin-bottom:15px}
-.sense-writing-paper{max-width:640px;margin:auto;padding:clamp(17px,3vw,30px);background:#f4f1eb}
+.sense-writing-paper{width:66%;max-width:860px;margin:auto;padding:clamp(17px,3vw,30px);background:#f4f1eb}
 .sense-writing-paper .field:last-child,.sense-naming-form .field:last-child{margin-bottom:0}
 .sense-writing-paper #capture-type{max-width:155px}
 .sense-writing-paper #capture-detail,.sense-naming-form #sense-memory-detail{
@@ -666,7 +666,7 @@ body:has(#main > .view){
 .sense-capture-tiles span:last-child{right:0;top:0}
 .sense-naming-scene{
   display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(24px,5vw,64px);align-items:center;
-  max-width:1060px;margin:clamp(20px,5dvh,56px) auto 0;
+  max-width:1360px;margin:clamp(20px,5dvh,56px) auto 0;
 }
 .sense-naming-form .field label{font:400 20px/1.1 Lekton,monospace}
 .sense-naming-form #capture-name{border:0;border-radius:99px;background:#f1eee8}
@@ -714,4 +714,14 @@ body:has(#main > .view){
   .sense-naming-scene{grid-template-columns:1fr;gap:12px}
   .sense-naming-scene .sense-artwork{height:150px;max-width:260px}
   .view .progress{gap:4px}
+}
+
+/* Let desktop compositions use the viewport width without growing past its height. */
+@media(min-width:701px){
+  .create-choice-view .flow-tile{aspect-ratio:auto;min-height:clamp(190px,32dvh,340px);padding:24px}
+  .create-choice-view .flow-choices{gap:clamp(20px,3.5vw,64px)}
+  .sense-naming-scene .sense-artwork{max-width:560px}
+}
+@media(max-width:650px){
+  .sense-writing-paper{width:100%}
 }
