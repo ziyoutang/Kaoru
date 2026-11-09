@@ -1302,7 +1302,11 @@ window.addEventListener('pagehide', () => { if (active) rememberDraft(); });
 render();
 
 
+let sphereFadeTimer;
 function turnSenseSphere(sphere,amount) {
+  sphere.classList.add('is-spinning');
+  clearTimeout(sphereFadeTimer);
+  sphereFadeTimer = setTimeout(() => sphere.classList.remove('is-spinning'),220);
   const angle = Number(sphere.dataset.rotation || 0) + amount;
   sphere.dataset.rotation = angle;
   sphere.style.setProperty('--turn',angle + 'deg');
