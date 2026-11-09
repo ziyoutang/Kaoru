@@ -287,7 +287,7 @@ function renderDiary() {
         <section class="home-face face-senses" data-home-face="1" data-node-id="18:204" aria-label="Senses" inert aria-hidden="true">
           ${homeDots}
           <div class="home-panel">
-            ${Object.entries(senses).map(([id,[label]]) => `<button type="button" class="sense-tile sense-${id}" data-action="pick-sense" data-value="${id}" aria-pressed="false">${label}</button>`).join('')}
+            ${Object.entries(senses).map(([id,[label]]) => `<button type="button" class="sense-tile sense-${id}" data-action="pick-sense" data-value="${id}" aria-pressed="false" aria-label="${label}" title="Drag to rotate or use Shift and the arrow keys"><canvas class="sense-model" data-sense-model="${id}" aria-hidden="true"></canvas><span class="sense-label">${label}</span></button>`).join('')}
             <button type="button" class="sense-create" data-action="home-view" data-value="2">
               <img src="assets/entries/sense-circle.svg" width="141" height="141" alt="" data-node-id="18:225">
               <span>Create</span>
@@ -305,7 +305,7 @@ function renderDiary() {
         </section>
       </div>
     </div>
-    <div class="sense-caption" hidden><span id="sense-status" role="status">Start with a sense.</span><a href="#scents">Browse scents →</a></div>
+    <div class="sense-caption" hidden><span id="sense-status" role="status">Drag to rotate · tap to select</span><a href="#scents">Browse scents →</a></div>
     <button class="home-next" type="button" data-action="home-turn" data-value="1">
       <span id="home-next-label">Senses</span>${icon('arrow')}
     </button>
@@ -346,6 +346,12 @@ function rotateHome(direction) {
   });
   document.querySelector('.entries-filters').inert = index !== 0;
   document.querySelector('.sense-caption').hidden = index !== 1;
+  if (index === 1) {
+    const face = document.querySelector('.face-senses');
+    requestAnimationFrame(() => {
+      if (face.isConnected && !face.inert) window.KaoruSenses.mount(face);
+    });
+  }
   document.querySelector('#home-next-label').textContent = homeViews[(index + 1) % homeViews.length];
   document.querySelector('#home-announcement').textContent = homeViews[index] + ' view';
 }
@@ -357,7 +363,7 @@ function selectSense(key) {
   homeSense = homeSense === key ? '' : key;
   const prompt = senses[homeSense]?.[1];
   document.querySelectorAll('.sense-tile').forEach(tile => tile.setAttribute('aria-pressed',String(tile.dataset.value === homeSense)));
-  document.querySelector('#sense-status').textContent = prompt || 'Start with a sense.';
+  document.querySelector('#sense-status').textContent = prompt || 'Drag to rotate · tap to select';
   document.querySelector('#create-instruction').textContent = prompt || 'Start with a journal, a poem, or an image.';
 }
 
@@ -848,7 +854,7 @@ document.addEventListener('wheel', event => {
 },{passive:false});
 document.addEventListener('touchstart', event => {
   swipeOrigin = event.target.closest('.entries-home') &&
-    !event.target.closest('.entries-search, .home-dock') &&
+    !event.target.closest('.entries-search, .home-dock, .sense-tile') &&
     event.touches.length === 1 ? event.touches[0] : null;
 },{passive:true});
 document.addEventListener('touchend', event => {
