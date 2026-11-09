@@ -70,6 +70,8 @@ let deckEntryId = '';
 let query = '';
 let detailTab = '';
 let detailId = '';
+let pendingSceneEdit = null;
+let senseDraft = null;
 let toastTimer;
 function message(value) {
   clearTimeout(toastTimer);
@@ -148,7 +150,7 @@ function renderHeader(page) {
     <nav class="nav" aria-label="Main navigation">
       <a href="#diary">Entries</a>
       <a href="#scents"${['scents','scent'].includes(page) ? ' aria-current="page"' : ''}>Scent index</a>
-      <a href="#create"${['create','edit','sense-select','capture','reuse-sense','captured'].includes(page) ? ' aria-current="page"' : ''}>Create New</a>
+      <a href="#create"${['create','edit','sense-select','capture','name-sense','reuse-sense','captured'].includes(page) ? ' aria-current="page"' : ''}>Create New</a>
       <a href="#saved"${page === 'saved' ? ' aria-current="page"' : ''}>Saved</a>
     </nav>
   </div>`;
@@ -156,16 +158,27 @@ function renderHeader(page) {
 function photos(entry) {
   return entry.selected.map(id => entry.uploads.find(file => file.id === id) || artworkById(id)).filter(Boolean);
 }
-function scene(entry, clickableScent = false) {
+function photoCrop(entry,id) {
+  return Number(entry.photoCrops?.[id] ?? entry.crop ?? 50);
+}
+function scene(entry, interactive = false) {
   const images = photos(entry);
   const excerpt = splitLines(entry.poem).slice(0,3).join('\n');
-  const placePhoto = (item, style) => item ? `<div class="${style}"><img src="${esc(item.src)}" alt="${esc(item.name)}"></div>` : '';
-  return `<div class="scene-art layout-${entry.layout} tint-${entry.tint} ${excerpt ? 'has-poem' : ''}" style="--crop:${Number(entry.crop)}%">
+  const piece = (kind,name,style,content,key = '') => {
+    const crop = kind === 'image' ? ` style="--crop:${photoCrop(entry,key)}%"` : '';
+    if (!interactive) return `<div class="${style}"${crop}>${content}</div>`;
+    return `<div class="${style} scene-piece" data-kind="${kind}" data-key="${esc(key)}"${crop}>
+      <button type="button" class="scene-piece-trigger" aria-label="${esc(name)}" aria-expanded="false">${content}</button>
+      <button type="button" class="scene-piece-edit" aria-label="Edit ${esc(name)}" hidden>Edit?</button>
+    </div>`;
+  };
+  const placePhoto = (item,style) => item ? piece('image',item.name,style,`<img src="${esc(item.src)}" alt="${interactive ? '' : esc(item.name)}">`,item.id) : '';
+  return `<div class="scene-art layout-${entry.layout} tint-${entry.tint}"${interactive ? ` data-scene-entry="${esc(entry.id)}"` : ''}>
     ${images[0] ? placePhoto(images[0],'main-photo') : `<div class="blank-art" aria-hidden="true">${icon('scent')}</div>`}
     ${placePhoto(images[2],'little-photo third-photo')}${placePhoto(images[1],'little-photo')}
-    ${excerpt ? `<div class="fragment">${esc(excerpt)}</div>` : ''}
-    ${entry.note ? `<div class="margin-note">${esc(entry.note)}</div>` : ''}
-    ${entry.scent && entry.showScent ? (clickableScent ? scentChip(entry.scent,'art-chip') : `<span class="chip art-chip">${icon('scent')} ${esc(entry.scent)}</span>`) : ''}
+    ${excerpt ? piece('poem','Poem lines','fragment',`<span>${esc(excerpt)}</span>`) : ''}
+    ${entry.note ? piece('note','Handwritten note','margin-note',`<span>${esc(entry.note)}</span>`) : ''}
+    ${entry.scent && entry.showScent ? piece('scent',entry.scent,'chip art-chip',`${icon('scent')} ${esc(entry.scent)}`) : ''}
   </div>`;
 }
 function entryCard(entry) {
@@ -204,7 +217,7 @@ function deckSheet(entry, slot) {
   const photo = entry && photos(entry)[0];
   const action = entry ? 'deck-select' : 'home-view';
   const label = entry ? 'Select ' + title : 'Start a new page';
-  return `<div class="deck-sheet sheet-${slot}">
+  return `<div class="deck-sheet sheet-${slot}" data-deck-card="${esc(entry?.id || '')}">
     ${photo ? `<img src="${esc(photo.src)}" alt="">` : ''}
     <button type="button" class="deck-sheet-control" data-action="${action}" data-value="${esc(entry?.id || '2')}" aria-label="${esc(label)}" title="${esc(title)}"><span>${esc(title)}</span></button>
   </div>`;
@@ -222,7 +235,7 @@ function frontSheet(entry) {
   const draft = entry.status === 'draft';
   const title = entry.title || 'Untitled memory';
   const kind = draft ? 'Draft' : entry.kind === 'journal' ? 'Journal' : entry.kind === 'poem' ? 'Poem' : 'Collage';
-  return `<article class="deck-front">
+  return `<article class="deck-front" data-deck-card="${esc(entry.id)}">
     <div class="front-caption"><p>${dateLabel(entry.created)} · ${kind}</p><h2>${esc(title)}</h2></div>
     <div class="front-actions">
       ${draft ? button('resume','Continue Writing','deck-action',entry.id,'arrow') : button('entry','Open entry','deck-action',entry.id,'arrow')}
@@ -255,10 +268,10 @@ function categoryGallery(list, index) {
   const cards = list.slice(start,end).map(entry => {
     const title = esc(entry.title || 'Untitled memory');
     if (isCollage) {
-      return `<button class="collage-card" type="button" data-action="entry-collage" data-value="${esc(entry.id)}" aria-label="Open collage: ${title}">
-        <span class="collage-card-title">${title}</span>
-        <div class="collage-card-art">${scene({...entry,showScent:false})}</div>
-      </button>`;
+      return `<article class="collage-card">
+        <button class="collage-card-title" type="button" data-action="entry-collage" data-value="${esc(entry.id)}" aria-label="Open collage: ${title}">${title}</button>
+        <div class="collage-card-art">${scene(entry,true)}</div>
+      </article>`;
     }
     const action = entry.status === 'draft' ? 'resume' : 'entry-poem';
     return `<button class="poem-card" type="button" data-action="${action}" data-value="${esc(entry.id)}" aria-label="Open poem: ${title}">
@@ -300,6 +313,33 @@ function renderEntries() {
     ${back.map((entry,i) => deckSheet(entry,i+1)).reverse().join('')}
     ${frontSheet(front)}
     <p class="entries-status" role="status">${front ? `Entry ${index+1} of ${list.length}. ${esc(front.title || 'Untitled memory')}.` : 'No entries to show.'}</p>`;
+}
+function selectDeckEntry(id) {
+  const deck = document.querySelector('#entries');
+  const motion = deck.getAttribute('aria-roledescription') === 'carousel' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const previous = new Map();
+  if (motion) {
+    deck.querySelectorAll('[data-deck-card]').forEach(card => previous.set(card.dataset.deckCard,card.getBoundingClientRect()));
+  }
+  deckEntryId = id;
+  renderEntries();
+  if (motion) {
+    deck.querySelectorAll('[data-deck-card]').forEach(card => {
+      const from = previous.get(card.dataset.deckCard);
+      const to = card.getBoundingClientRect();
+      if (!from || !to.width || !to.height) return;
+      const x = from.x + from.width/2 - to.x - to.width/2;
+      const y = from.y + from.height/2 - to.y - to.height/2;
+      const front = card.classList.contains('deck-front');
+      const arc = Math.min(18,to.height * .07);
+      card.animate([
+        {translate:`${x}px ${y}px ${front ? -24 : 20}px`,scale:`${from.width/to.width} ${from.height/to.height}`,rotate:`y ${front ? -13 : 11}deg`},
+        {translate:`${x*.38}px ${y*.38 + (front ? -arc : arc*.45)}px ${front ? 18 : -20}px`,rotate:`y ${front ? 5 : -6}deg`,offset:.58},
+        {translate:'0px 0px 0px',scale:'1',rotate:'y 0deg'}
+      ],{duration:560,easing:'cubic-bezier(.22,.61,.36,1)'});
+    });
+  }
+  deck.focus({preventScroll:true});
 }
 const homeViews = ['Entries','Senses','Create New'];
 const homeMotifs = `
@@ -369,14 +409,6 @@ function renderDiary() {
       <input id="search" type="search" placeholder="search for what you want...." value="${esc(query)}" aria-label="Search notes, poems, and scents" hidden>
       <button class="entries-search-submit" type="submit" aria-label="Search diary" hidden><img src="assets/entries/search-arrow.svg" width="28" height="15" alt="" data-node-id="18:248"></button>
     </form>
-    <div class="home-dock">
-      <nav class="home-navigation" aria-label="Home views">
-        ${iconButton('home-turn','Previous Home view','-1','back')}
-        ${homeViews.map((label,i) => `<button type="button" class="home-view" data-action="home-view" data-value="${i}"${i === 0 ? ' aria-current="page"' : ''}>${label}</button>`).join('')}
-        ${iconButton('home-turn','Next Home view','1','arrow')}
-      </nav>
-      <a href="#saved" class="home-saved">Saved</a>
-    </div>
     <p id="home-announcement" class="entries-status" role="status"></p>
   </section>`;
   renderEntries();
@@ -394,8 +426,7 @@ function rotateHome(direction) {
   if (!turntable) return;
   homeTurn += direction;
   const index = homeIndex();
-  const next = document.querySelector(`.home-navigation .home-view[data-value="${index}"]`);
-  if (document.activeElement?.closest('.home-face, .entries-filters, .sense-caption')) next?.focus({preventScroll:true});
+  if (document.activeElement?.closest('.home-face, .entries-filters, .sense-caption')) document.querySelector('.home-next')?.focus({preventScroll:true});
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     turntable.parentElement.classList.add('is-turning');
   }
@@ -403,10 +434,6 @@ function rotateHome(direction) {
   turntable.querySelectorAll('.home-face').forEach((face,i) => {
     face.inert = i !== index;
     face.setAttribute('aria-hidden',String(i !== index));
-  });
-  document.querySelectorAll('.home-navigation .home-view').forEach((control,i) => {
-    if (i === index) control.setAttribute('aria-current','page');
-    else control.removeAttribute('aria-current');
   });
   document.querySelector('.entries-filters').inert = index !== 0;
   document.querySelector('.sense-caption').hidden = index !== 1;
@@ -452,9 +479,10 @@ function senseRecords() {
 }
 function renderCreate(reference) {
   const note = senseRecords().find(item => item.id === reference);
-  main.innerHTML = `<div class="wrap view choice-view" data-node-id="20:283">
+  main.innerHTML = `<div class="wrap view choice-view create-choice-view" data-node-id="20:283">
     ${backLink('#diary')}
-    ${viewTitle('Begin a page','Create New',note ? 'Carrying ' + note.name + ' into this page.' : 'What would you like to start with?')}
+    <h1 class="entries-status">Create New</h1>
+    <p class="create-prompt">${note ? 'Carrying ' + esc(note.name) + ' into this page.' : 'What would you like to start with?'}</p>
     <form id="create-flow" data-reference="${esc(reference)}">
       <fieldset class="flow-choices" aria-label="How to start">
         ${createChoices.map(([value,label,hint],i) => `<label class="flow-choice">
@@ -469,25 +497,61 @@ function renderCreate(reference) {
 function renderSenseSelect(type) {
   main.innerHTML = `<div class="wrap view choice-view" data-node-id="26:470">
     ${backLink(route('create',type),'Back to Create New')}
-    ${viewTitle('Begin with a sense','Sense Selection','Capture a detail from this moment or return to one you kept.')}
+    <h1 class="entries-status">Sense Selection</h1>
     <div class="flow-choices sense-choices">
-      <a class="flow-tile" href="${route('capture',type)}"><strong>Capture a new sense</strong><small>Describe a sensory experience</small></a>
-      <a class="flow-tile" href="#reuse-sense"><strong>Reuse an existing sense</strong><small>Browse saved senses and scents</small></a>
+      <a class="flow-tile" href="${route('capture',type)}"><strong>Capture a new sense</strong></a>
+      <a class="flow-tile" href="#reuse-sense"><strong>Reuse an existing sense</strong></a>
+      <svg class="sense-orbit-art" viewBox="0 0 142 205" aria-hidden="true">
+        <g fill="#d9d8d2"><circle cx="60" cy="17" r="14"/><circle cx="86" cy="54" r="14"/><circle cx="99" cy="103" r="14"/><circle cx="93" cy="145" r="14"/><circle cx="68" cy="182" r="14"/><circle cx="14" cy="103" r="2"/><circle cx="36" cy="103" r="2"/><circle cx="58" cy="103" r="2"/></g>
+        <path d="M126 83q17 25-1 52m0 0 0-7m0 7 7-1" fill="none" stroke="#aaa79e" stroke-linecap="round"/>
+      </svg>
     </div>
   </div>`;
 }
 function renderCapture(type) {
+  const selectedType = Object.hasOwn(senses,type) ? type : senseDraft?.type || 'nose';
+  const draft = senseDraft?.type === selectedType ? senseDraft : null;
   main.innerHTML = `<div class="wrap view" data-node-id="20:291">
     ${backLink(route('sense-select',type),'Back to Sense Selection')}
-    ${viewTitle('A sensory detail','Capture New Senses','Describe what you noticed in your own words.')}
-    <form id="capture-sense" class="panel flow-narrow">
-      <div class="field"><label for="capture-type">Sense</label>
-        <select id="capture-type" name="type">${Object.entries(senses).map(([key,[label]]) => `<option value="${key}"${key === (senses[type] ? type : 'nose') ? ' selected' : ''}>${label}</option>`).join('')}</select>
+    <h1 class="entries-status">Capture New Senses</h1>
+    <form id="capture-sense" class="sense-capture-form">
+      <div class="sense-capture-tiles" aria-hidden="true"><span>Hand</span><span>Nose</span></div>
+      <p class="sense-capture-prompt">Describe your sensory experience.</p>
+      <div class="sense-writing-paper">
+        <div class="field"><label for="capture-type">Sense</label>
+          <select id="capture-type" name="type">${Object.entries(senses).map(([key,[label]]) => `<option value="${key}"${key === selectedType ? ' selected' : ''}>${label}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label for="capture-detail">What did you notice?</label><textarea id="capture-detail" name="detail" placeholder="Describe the moment…" maxlength="220" required>${esc(draft?.detail || '')}</textarea></div>
       </div>
-      <div class="field"><label for="capture-name">Short name</label><input id="capture-name" name="name" placeholder="Wet pavement, warm linen, the sound of rain…" maxlength="55" required></div>
-      <div class="field"><label for="capture-detail">What did you notice?</label><textarea id="capture-detail" name="detail" placeholder="Describe the moment…" maxlength="220" required></textarea></div>
-      <button type="submit" class="btn flow-continue">Capture sense ${icon('arrow')}</button>
+      <button type="submit" class="btn flow-continue">Continue ${icon('arrow')}</button>
     </form>
+  </div>`;
+}
+function senseArtwork(type,name = '',linked = false) {
+  return `<div class="sense-artwork" aria-hidden="true">
+    <span>${senses[type][0]}</span><span>${esc(name || 'Memory')}</span><span>${linked ? 'Linked' : 'Sense'}</span>
+  </div>`;
+}
+function renderSenseNaming() {
+  if (!senseDraft) { renderCapture(''); return; }
+  const memories = state.entries.filter(entry => entry.status === 'saved').sort(byDate);
+  main.innerHTML = `<div class="wrap view sense-naming-view" data-node-id="27:530">
+    ${backLink(route('capture',senseDraft.type),'Back to capture')}
+    <h1 class="entries-status">Name your sense</h1>
+    <div class="sense-naming-scene">
+      ${senseArtwork(senseDraft.type)}
+      <form id="name-sense" class="sense-naming-form">
+        <div class="field"><label for="capture-name">Sense name</label><input id="capture-name" name="name" placeholder="Wet pavement, warm linen…" maxlength="55" required></div>
+        <div class="field"><label for="sense-memory-detail">Sensory memory</label><textarea id="sense-memory-detail" name="detail" maxlength="220" required>${esc(senseDraft.detail)}</textarea></div>
+        <details class="sense-memory-import">
+          <summary>Import memories ${icon('arrow')}</summary>
+          <div class="field"><label for="sense-memory">Link a saved diary entry</label>
+            <select id="sense-memory" name="memory"><option value="">Choose a memory</option>${memories.map(entry => `<option value="${esc(entry.id)}">${esc(entry.title || 'Untitled memory')}</option>`).join('')}</select>
+          </div>
+        </details>
+        <button type="submit" class="btn flow-continue">Save sense ${icon('arrow')}</button>
+      </form>
+    </div>
   </div>`;
 }
 function renderReuseSenses() {
@@ -500,10 +564,13 @@ function renderReuseSenses() {
 }
 function renderCaptured(id) {
   const note = senseRecords().find(item => item.id === id);
-  main.innerHTML = `<div class="wrap view choice-view" data-node-id="24:457">
+  main.innerHTML = `<div class="wrap view choice-view sense-result-view" data-node-id="24:457">
     ${backLink('#sense-select','Back to Sense Selection')}
-    ${note ? `${viewTitle('A detail to keep','Sense ready')}
-      <div class="captured-sense"><span class="eyebrow">${senses[note.type][0]}</span><h2>${esc(note.name)}</h2>${note.detail ? `<p>${esc(note.detail)}</p>` : ''}</div>
+    ${note ? `${senseArtwork(note.type,note.name,Boolean(note.memoryId))}
+      <div class="captured-sense"><h1>${note.detail ? 'Senses captured.' : 'Sense ready.'}</h1><p class="entries-status">${esc(note.name)}</p>
+        ${note.detail ? `<p>${esc(note.detail)}</p>` : ''}
+        ${note.memoryId ? `<a href="${route('entry',note.memoryId)}" class="btn link">Open linked memory ${icon('arrow')}</a>` : ''}
+      </div>
       <a class="btn flow-continue" href="${route('create',note.id)}">Continue to Create New ${icon('arrow')}</a>`
     : empty('Sense unavailable','Choose a saved sense or capture a new one.') }
   </div>`;
@@ -662,7 +729,7 @@ function optionChips(action, options) {
 }
 function collagePanel() {
   return `<div class="editor-grid">
-    <section class="panel"><p class="eyebrow">Live preview</p><div id="collage-preview">${scene(active)}</div></section>
+    <section class="panel"><p class="eyebrow">Live preview</p><div id="collage-preview">${scene(active,true)}</div></section>
     <section class="panel">
       <h3>Arrange your page</h3>
       ${field('title','Title',active.title,{placeholder:'Untitled memory',max:90})}
@@ -670,9 +737,14 @@ function collagePanel() {
       ${field('note','Handwritten note',active.note,{placeholder:'Something to keep in the margin',max:110})}
       <fieldset class="field"><legend>Layout</legend><div class="actions">${optionChips('layout',[['layered','Layered'],['split','Split'],['quiet','Quiet']])}</div></fieldset>
       <fieldset class="field"><legend>Paper color</legend><div class="actions">${optionChips('tint',[['sand','Sand'],['ash','Sage'],['rose','Clay']])}</div></fieldset>
-      ${active.selected.length ? `<div class="field"><label for="crop">Shift photo crop</label><input id="crop" type="range" min="0" max="100" value="${active.crop}" data-field="crop"></div>` : ''}
+      ${field('scent','Scent label',active.scent,{placeholder:'Optional',max:55})}
       ${active.scent ? `<div class="field"><label><input type="checkbox" data-field="showScent" ${active.showScent ? 'checked' : ''}> Show scent label on collage</label></div>` : ''}
-      ${photos(active).map((item,i,list) => `<div class="layer-row"><span class="small">${i+1}. ${esc(item.name)}</span>${iconButton('move-up','Move image earlier',item.id,'up',i===0)}${iconButton('move-down','Move image later',item.id,'down',i===list.length-1)}${iconButton('remove-layer','Remove from collage',item.id,'cross')}</div>`).join('')}
+      ${photos(active).map((item,i,list) => `<div class="layer-row">
+        <details class="photo-settings"><summary>${i+1}. ${esc(item.name)}</summary>
+          <label class="field" for="photo-crop-${esc(item.id)}">Shift photo crop<input id="photo-crop-${esc(item.id)}" type="range" min="0" max="100" value="${photoCrop(active,item.id)}" data-photo-crop="${esc(item.id)}"></label>
+        </details>
+        ${iconButton('move-up','Move image earlier',item.id,'up',i===0)}${iconButton('move-down','Move image later',item.id,'down',i===list.length-1)}${iconButton('remove-layer','Remove from collage',item.id,'cross')}
+      </div>`).join('')}
       <div class="editor-actions">
         <div class="actions">${button('step-back','Images','ghost','','back')}${button('save-draft','Save & exit','ghost')}</div>
         ${button('save-scene','Save scene','primary','','arrow')}
@@ -715,6 +787,7 @@ function render(focus = false) {
   if (page === 'create') renderCreate(id);
   else if (page === 'sense-select') renderSenseSelect(id);
   else if (page === 'capture') renderCapture(id);
+  else if (page === 'name-sense') renderSenseNaming();
   else if (page === 'reuse-sense') renderReuseSenses();
   else if (page === 'captured') renderCaptured(id);
   else if (page === 'edit') renderWizard(id);
@@ -724,6 +797,11 @@ function render(focus = false) {
   else if (page === 'saved') renderSaved();
   else renderDiary();
   if (focus) { window.scrollTo(0,0); main.focus({preventScroll:true}); }
+  if (pendingSceneEdit) {
+    const selection = pendingSceneEdit;
+    pendingSceneEdit = null;
+    if (page === 'edit' && active?.editOf === selection.entryId) focusSceneEditor(selection);
+  }
 }
 function newDraft(values = {}) {
   if (active && !rememberDraft()) return;
@@ -736,6 +814,7 @@ function beginCreation(form) {
   const note = senseRecords().find(item => item.id === reference);
   const sense = note?.type || (Object.hasOwn(senses,reference) ? reference : '');
   if (mode === 'senses') {
+    senseDraft = null;
     go('sense-select',sense);
     return;
   }
@@ -746,6 +825,7 @@ function beginCreation(form) {
   } else if (note) {
     values.senseDetail = note.detail;
   }
+  if (note?.memoryId) values.parentId = note.memoryId;
   if (mode === 'images') {
     values.stage = 'media';
     values.skippedPoem = true;
@@ -755,14 +835,26 @@ function beginCreation(form) {
 function captureSense(form) {
   const fields = new FormData(form);
   const type = fields.get('type');
-  const name = fields.get('name').trim();
   const detail = fields.get('detail').trim();
-  if (!Object.hasOwn(senses,type) || !name || !detail) {
-    message('Add a short name and a detail for this sense.');
+  if (!Object.hasOwn(senses,type) || !detail) {
+    message('Describe what you noticed.');
     return;
   }
-  const note = {id:makeId(),type,name,detail};
-  if (persist({...state,senseNotes:[note,...(state.senseNotes || [])]})) go('captured',note.id);
+  senseDraft = {type,detail};
+  go('name-sense');
+}
+function saveSense(form) {
+  const fields = new FormData(form);
+  const name = fields.get('name').trim();
+  const detail = fields.get('detail').trim();
+  if (!name || !detail) { message('Add a name and a detail for this sense.'); return; }
+  const note = {id:makeId(),type:senseDraft.type,name,detail};
+  const memory = itemById(fields.get('memory'));
+  if (memory?.status === 'saved') note.memoryId = memory.id;
+  if (persist({...state,senseNotes:[note,...(state.senseNotes || [])]})) {
+    senseDraft = null;
+    go('captured',note.id);
+  }
 }
 function advance(stage) {
   const previous = active.stage;
@@ -798,11 +890,43 @@ function setBookmark(key,id) {
     message(found ? 'Removed from Saved.' : 'Added to Saved.');
   }
 }
-function editSaved(id) {
+function editSaved(id,openCollage = false) {
   const entry = itemById(id);
   const existing = state.entries.find(draft => draft.status === 'draft' && draft.editOf === id);
-  if (existing) { go('edit',existing.id); return; }
+  if (existing) {
+    if (openCollage) { active = structuredClone(existing); active.stage = 'collage'; }
+    go('edit',existing.id);
+    return;
+  }
   newDraft({...structuredClone(entry),id:makeId(),status:'draft',editOf:id,stage:entry.kind ? 'media' : 'collage',skippedPoem:!entry.poem,updated:now()});
+}
+function focusSceneEditor({kind,key}) {
+  const field = document.getElementById(kind === 'image' ? 'photo-crop-' + key : kind);
+  if (!field) { message('This piece is unavailable in the current draft.'); return; }
+  const options = field.closest('details');
+  if (options) options.open = true;
+  field.focus();
+}
+function selectScenePiece(piece) {
+  const previous = document.querySelector('.scene-piece.is-selected');
+  const update = (layer,shown) => {
+    layer.classList.toggle('is-selected',shown);
+    layer.querySelector('.scene-piece-trigger').setAttribute('aria-expanded',String(shown));
+    layer.querySelector('.scene-piece-edit').hidden = !shown;
+  };
+  if (previous) update(previous,false);
+  if (piece && piece !== previous) update(piece,true);
+  return previous;
+}
+function editScenePiece(piece) {
+  const {kind,key} = piece.dataset;
+  const entryId = piece.closest('.scene-art').dataset.sceneEntry;
+  if (active?.id === entryId) {
+    focusSceneEditor({kind,key});
+  } else {
+    pendingSceneEdit = {entryId,kind,key};
+    editSaved(entryId,true);
+  }
 }
 function finalize(kind = '') {
   if (!['title','journal','poem','prompt','note','scent','smell'].some(key => active[key].trim()) && !active.selected.length) {
@@ -932,11 +1056,7 @@ const actions = {
     document.querySelectorAll('[data-action="filter"]').forEach(control => control.setAttribute('aria-pressed',control.dataset.value === value));
     renderEntries();
   },
-  'deck-select':id => {
-    deckEntryId = id;
-    renderEntries();
-    document.querySelector('#entries').focus({preventScroll:true});
-  },
+  'deck-select':selectDeckEntry,
   'open-search':() => setSearchExpanded(document.querySelector('#entries-search'),true),
   'clear-search':() => {
     query = '';
@@ -1016,6 +1136,11 @@ const actions = {
   'save-scene':() => finalize()
 };
 document.addEventListener('click', event => {
+  const trigger = event.target.closest('.scene-piece-trigger');
+  if (trigger) { selectScenePiece(trigger.parentElement); return; }
+  const edit = event.target.closest('.scene-piece-edit');
+  selectScenePiece(null);
+  if (edit) { editScenePiece(edit.parentElement); return; }
   const button = event.target.closest('[data-action]');
   if (button) actions[button.dataset.action]?.(button.dataset.value);
   const link = event.target.closest('a[href^="#"]');
@@ -1028,26 +1153,28 @@ document.addEventListener('click', event => {
 });
 document.addEventListener('input', event => {
   if (event.target.id === 'search') { query = event.target.value; deckEntryId = ''; renderEntries(); return; }
-  const key = event.target.dataset.field;
-  if (!key || !active) return;
-  active[key] = event.target.type === 'checkbox' ? event.target.checked : event.target.type === 'range' ? Number(event.target.value) : event.target.value;
+  const {field:key,photoCrop:cropId} = event.target.dataset;
+  if (!active || (!key && !cropId)) return;
+  if (cropId) active.photoCrops = {...active.photoCrops,[cropId]:Number(event.target.value)};
+  else active[key] = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
   const preview = document.querySelector('#collage-preview');
-  if (preview) preview.innerHTML = scene(active);
+  if (preview) preview.innerHTML = scene(active,true);
 });
 document.addEventListener('change', event => {
   if (event.target.id === 'upload' && active) void uploadFiles(event.target.files);
   if (event.target.id === 'import-writing') void importWriting(event.target);
-  if (event.target.dataset.field && active) rememberDraft();
+  if (active && (event.target.dataset.field || event.target.dataset.photoCrop)) rememberDraft();
 });
 document.addEventListener('focusout', event => {
   const form=event.target.closest('.entries-search.is-expanded');
   if (form && !form.contains(event.relatedTarget)) setSearchExpanded(form,false);
 });
 document.addEventListener('submit', event => {
-  if (event.target.id === 'create-flow' || event.target.id === 'capture-sense') {
+  if (event.target.id === 'create-flow' || event.target.id === 'capture-sense' || event.target.id === 'name-sense') {
     event.preventDefault();
     if (event.target.id === 'create-flow') beginCreation(event.target);
-    else captureSense(event.target);
+    else if (event.target.id === 'capture-sense') captureSense(event.target);
+    else saveSense(event.target);
     return;
   }
   if (event.target.id !== 'entries-search') return;
@@ -1060,6 +1187,10 @@ document.addEventListener('submit', event => {
   document.querySelector('#entries').focus({preventScroll:true});
 });
 document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    const piece = selectScenePiece(null);
+    if (piece) piece.querySelector('.scene-piece-trigger').focus({preventScroll:true});
+  }
   if (!document.querySelector('.home-turntable') || event.defaultPrevented ||
       event.altKey || event.metaKey || event.ctrlKey ||
       !['ArrowLeft','ArrowRight'].includes(event.key) ||
@@ -1084,7 +1215,7 @@ document.addEventListener('wheel', event => {
 },{passive:false});
 document.addEventListener('touchstart', event => {
   swipeOrigin = event.target.closest('.entries-home') &&
-    !event.target.closest('.entries-search, .home-dock, .sense-tile') &&
+    !event.target.closest('.entries-search, .sense-tile, .scene-piece') &&
     event.touches.length === 1 ? event.touches[0] : null;
 },{passive:true});
 document.addEventListener('touchend', event => {
