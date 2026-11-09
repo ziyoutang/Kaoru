@@ -1161,6 +1161,10 @@ document.addEventListener('input', event => {
   if (preview) preview.innerHTML = scene(active,true);
 });
 document.addEventListener('change', event => {
+  if (event.target.matches('#create-flow input[name="start"][value="senses"]')) {
+    beginCreation(event.target.form);
+    return;
+  }
   if (event.target.id === 'upload' && active) void uploadFiles(event.target.files);
   if (event.target.id === 'import-writing') void importWriting(event.target);
   if (active && (event.target.dataset.field || event.target.dataset.photoCrop)) rememberDraft();
