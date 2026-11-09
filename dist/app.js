@@ -551,8 +551,9 @@ function renderCapture(type) {
   </div>`;
 }
 function senseArtwork(type,name = '',linked = false) {
-  return `<div class="sense-artwork" aria-hidden="true">
-    <span>${senses[type][0]}</span><span>${esc(name || 'Memory')}</span><span>${linked ? 'Linked' : 'Sense'}</span>
+  const labels = [senses[type][0],name || 'Memory',linked ? 'Linked' : 'Sense'];
+  return `<div class="sense-artwork" tabindex="0" role="group" aria-label="Sensory sphere. Scroll sideways, drag, or use left and right arrow keys to browse its three labels.">
+    <div class="sense-orbit">${labels.map((label,index) => `<div class="sense-orbit-anchor" style="--slot:${index * 120}deg"><span>${esc(label)}</span></div>`).join('')}</div>
   </div>`;
 }
 function renderSenseNaming() {
@@ -1266,3 +1267,36 @@ window.addEventListener('hashchange', () => render(true));
 window.addEventListener('pagehide', () => { if (active) rememberDraft(); });
 render();
 
+
+function turnSenseSphere(sphere,amount) {
+  const angle = Number(sphere.dataset.rotation || 0) + amount;
+  sphere.dataset.rotation = angle;
+  sphere.style.setProperty('--turn',angle + 'deg');
+}
+document.addEventListener('wheel',event => {
+  const sphere = event.target.closest('.sense-artwork');
+  if (!sphere || event.ctrlKey) return;
+  const delta = event.shiftKey && !event.deltaX ? event.deltaY : event.deltaX;
+  if (!delta || (!event.shiftKey && Math.abs(delta) < Math.abs(event.deltaY))) return;
+  event.preventDefault();
+  turnSenseSphere(sphere,-delta * (event.deltaMode === 1 ? 8 : .45));
+},{passive:false});
+document.addEventListener('keydown',event => {
+  const sphere = event.target.closest('.sense-artwork');
+  if (!sphere || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+  event.preventDefault();
+  turnSenseSphere(sphere,event.key === 'ArrowRight' ? -120 : 120);
+});
+let sphereDrag = null;
+document.addEventListener('pointerdown',event => {
+  const sphere = event.target.closest('.sense-artwork');
+  if (!sphere || event.button !== 0) return;
+  sphereDrag = {sphere,x:event.clientX,id:event.pointerId};
+  sphere.setPointerCapture(event.pointerId);
+});
+document.addEventListener('pointermove',event => {
+  if (!sphereDrag || sphereDrag.id !== event.pointerId) return;
+  turnSenseSphere(sphereDrag.sphere,(event.clientX - sphereDrag.x) * .6);
+  sphereDrag.x = event.clientX;
+});
+['pointerup','pointercancel','lostpointercapture'].forEach(type => document.addEventListener(type,() => { sphereDrag = null; }));

@@ -311,7 +311,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   font:400 clamp(12px,1.12cqw,17px)/1.1 Lekton,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .collage-card-title:hover{text-decoration:underline;text-underline-offset:3px}
-.collage-card-art{min-height:0;background:var(--navy);padding:5% 6%;box-shadow:4px 5px 10px #0003}
+.collage-card-art{min-height:0;background:transparent;padding:0;box-shadow:0 6px 16px #00000014}
 .collage-card-art .scene-art{height:100%;width:100%;aspect-ratio:auto}
 .collage-card-art .fragment{font-size:clamp(9px,.85cqw,13px);padding:4% 5%;-webkit-line-clamp:2}
 .collage-card-art .margin-note{font-size:clamp(8px,.7cqw,11px);padding:1px 3px}
@@ -753,3 +753,24 @@ body:has(#main > .view){
   .sense-naming-scene .sense-artwork::before{width:150px}
 }
 @media(prefers-reduced-motion:reduce){.sense-wheel-panel,.sense-artwork::before{animation:none}.sense-wheel-item{transition:none}}
+
+/* Labels share the sphere's floating motion and travel around its depth axis. */
+.sense-artwork{--turn:0deg;--orbit-radius:125px;perspective:800px;transform-style:preserve-3d;touch-action:pan-y;cursor:grab;animation:sense-sphere-float 8s ease-in-out infinite;outline-offset:8px}
+.sense-artwork:active{cursor:grabbing}
+.sense-artwork::before{z-index:0;animation:none;translate:none;rotate:none}
+.sense-orbit{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(var(--turn));transition:transform .55s cubic-bezier(.22,.68,.23,1)}
+.sense-orbit-anchor{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d;transform:rotateY(var(--slot)) translateZ(var(--orbit-radius))}
+.sense-orbit-anchor:nth-child(2){top:30%}
+.sense-orbit-anchor:nth-child(3){top:70%}
+.sense-artwork .sense-orbit-anchor > span{position:absolute;inset:0 auto auto 0;width:clamp(100px,12vw,155px);min-height:55px;transform:translate(-50%,-50%) rotateY(calc(-1 * var(--slot) - var(--turn)));transition:transform .55s cubic-bezier(.22,.68,.23,1);box-shadow:3px 8px 15px #20253724}
+.sense-orbit-anchor span::after{content:"";position:absolute;width:1px;height:18px;background:#777f90;top:100%;left:50%;box-shadow:1px 0 #ffffff66}
+@media(max-width:650px){.sense-artwork{--orbit-radius:85px}.sense-naming-scene .sense-artwork{--orbit-radius:65px}.sense-artwork .sense-orbit-anchor > span{font-size:16px;min-height:42px;width:100px}}
+@media(prefers-reduced-motion:reduce){.sense-artwork{animation:none}.sense-orbit,.sense-orbit-anchor span{transition:none}}
+
+@media(min-width:701px){
+  .entries-deck:has(.collage-home){width:76%;height:39%;top:49%}
+  .collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){width:100%;height:100%;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:clamp(18px,2vw,36px)}
+  .collage-card:last-child:nth-child(odd){grid-column:auto;width:100%}
+  .collage-card-art .fragment{font-size:clamp(12px,1.1cqw,17px)}
+  .collage-card-art .art-chip{font-size:clamp(10px,.8cqw,12px)}
+}
