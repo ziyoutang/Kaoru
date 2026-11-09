@@ -238,7 +238,10 @@ function journalPreview(entry, next) {
       ${next.slice(0,4).map(item => button('deck-select',item.title || 'Untitled memory','journal-tab',item.id)).join('')}
     </div>
     <article class="journal-paper">
-      <h2>${esc(title)}</h2>
+      <div class="journal-heading">
+        <time datetime="${esc(entry.created)}">${dateLabel(entry.created)}</time>
+        <h2>${esc(title)}</h2>
+      </div>
       <p>${esc(entry.journal)}</p>
       ${button(entry.status === 'draft' ? 'resume' : 'entry-journal',entry.status === 'draft' ? 'Continue Writing' : 'Open journal','journal-open',entry.id,'arrow')}
     </article>
@@ -259,8 +262,10 @@ function categoryGallery(list, index) {
     }
     const action = entry.status === 'draft' ? 'resume' : 'entry-poem';
     return `<button class="poem-card" type="button" data-action="${action}" data-value="${esc(entry.id)}" aria-label="Open poem: ${title}">
-      <img src="assets/entries/origami-bird.png" width="450" height="452" alt="">
-      <span class="poem-tag"><span>${title}</span></span>
+      <span class="poem-flight">
+        <img src="assets/entries/origami-bird.png" width="450" height="452" alt="">
+        <span class="poem-tether"><span class="poem-tag"><span>${title}</span></span></span>
+      </span>
     </button>`;
   }).join('');
   const pages = list.length > size ? `<nav class="category-pages" aria-label="${filter} pages">

@@ -264,28 +264,40 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   position:absolute;inset:0;margin:auto;color:var(--navy);pointer-events:auto;
 }
 .journal-home{width:85%;display:grid;grid-template-columns:20% minmax(0,1fr) 20%;align-items:center}
+@font-face{font-family:Caveat;src:url("assets/entries/caveat.ttf") format("truetype");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Pinyon Script";src:url("assets/entries/pinyon-script.ttf") format("truetype");font-display:swap}
 .journal-tabs{display:grid;gap:clamp(7px,1.05cqw,16px);align-content:center;min-width:0}
 .btn.journal-tab{
   display:block;width:100%;min-width:0;min-height:clamp(26px,2.65cqw,40px);padding:3px 6px;
-  border:0;border-radius:0;background:#e9e7e4;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  font:italic clamp(10px,.95cqw,14px)/1.2 var(--entries-type);
+  border:0;border-radius:0;background:#e7d9c9;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font:600 clamp(13px,1.3cqw,19px)/1.2 Caveat,cursive;color:#493831;
 }
-.btn.journal-tab:hover,.btn.journal-tab:focus-visible{background:#dedbd5}
+.btn.journal-tab:nth-child(even){background:#eacdd2}
+.btn.journal-tab:hover,.btn.journal-tab:focus-visible{background:#dfbcc3}
 .journal-paper{
-  display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:clamp(8px,1.4cqw,22px);
-  height:100%;padding:clamp(15px,2.3cqw,35px);background:#f3efe9;
-  box-shadow:4px 5px 11px #0003;overflow:hidden;
+  position:relative;isolation:isolate;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:clamp(6px,1.05cqw,15px);
+  height:100%;padding:clamp(15px,2.1cqw,32px);background:#f7f2e7;color:#3f2f31;
+  box-shadow:inset 4px 0 0 #d4c8b67d,4px 5px 11px #0003;overflow:hidden;
 }
+.journal-paper::before,.journal-paper::after{content:"";position:absolute;pointer-events:none;z-index:-1}
+.journal-paper::before{
+  inset:12% 14% 12% 6%;transform:rotate(-1.2deg);
+  background:linear-gradient(180deg,transparent 54.6%,#8d53551c 55%,#fff4 55.4%,transparent 55.8%),linear-gradient(135deg,#ebc2cb,#f0d3d7);
+  box-shadow:1px 2px 3px #644a4526;
+}
+.journal-paper::after{inset:0;background:url("assets/entries/journal-botanicals.svg") center/100% 100% no-repeat}
+.journal-heading time{display:block;font:600 clamp(12px,1.05cqw,16px)/1.15 Caveat,cursive;color:#6b504a;margin-bottom:4px}
 .journal-paper h2{
-  font:400 clamp(21px,2cqw,31px)/1.1 Lekton,monospace;overflow-wrap:anywhere;
+  font:400 clamp(25px,3.4cqw,48px)/1 "Pinyon Script",cursive;letter-spacing:0;overflow-wrap:anywhere;
+  padding:2px 2px 2px 5px;margin-left:-5px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
 .journal-paper p{
   align-self:start;max-height:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:7;overflow:hidden;
-  font:400 clamp(13px,1.16cqw,17px)/1.55 var(--entries-type);
-  white-space:pre-wrap;overflow-wrap:anywhere;color:#524d47;
+  font:500 clamp(17px,1.85cqw,27px)/1.19 Caveat,cursive;
+  white-space:pre-wrap;overflow-wrap:anywhere;color:#453137;
 }
-.btn.journal-open{justify-self:start;min-height:30px;border:0;padding:0;background:none;font:italic 400 clamp(12px,1.08cqw,16px) var(--entries-type)}
+.btn.journal-open{justify-self:start;min-height:30px;border:0;padding:0;background:none;color:#4b3537;font:600 clamp(16px,1.45cqw,21px) Caveat,cursive}
 .btn.journal-open:hover{text-decoration:underline;text-underline-offset:4px}
 .journal-open svg{order:2;width:16px}
 .collage-home{
@@ -307,23 +319,55 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .collage-card-art .little-photo{border-width:2px}
 .poems-home{display:flex;align-items:center;justify-content:center;gap:1.2cqw}
 .poem-card{
-  --bird-turn:0deg;--tag-turn:14deg;--tag-x:81%;--tag-y:82%;
+  --bird-turn:0deg;--tag-x:89%;--tag-y:83%;--flight-time:8.4s;--flight-delay:-1s;--drop-delay:90ms;
   position:relative;display:block;width:30%;max-width:245px;min-width:0;
   padding:0;border:0;background:none;color:inherit;
 }
 .poem-card:not(:only-child):nth-child(1){translate:0 11%}
-.poem-card:nth-child(2){--bird-turn:19deg;--tag-turn:42deg;--tag-x:75%;--tag-y:88%;translate:0 -33%}
-.poem-card:nth-child(3){--bird-turn:22deg;--tag-turn:65deg;--tag-x:69%;--tag-y:89%;translate:0 -19%}
-.poem-card img{width:100%;height:auto;object-fit:contain;transform:rotate(var(--bird-turn));transition:transform 240ms ease}
-.poem-card:hover img,.poem-card:focus-visible img{transform:translateY(-5px) rotate(var(--bird-turn))}
-.poem-tag{
-  position:absolute;left:var(--tag-x);top:var(--tag-y);width:max-content;max-width:94%;
-  padding:4px 6px;background:#ece9e4;
-  transform:rotate(var(--tag-turn));transform-origin:0 50%;
-  font:italic 400 clamp(10px,.96cqw,14px)/1.25 var(--entries-type);
+.poem-card:nth-child(2){--bird-turn:19deg;--tag-x:76%;--tag-y:94%;--flight-time:9.6s;--flight-delay:-5.3s;--drop-delay:160ms;translate:0 -33%}
+.poem-card:nth-child(3){--bird-turn:22deg;--tag-x:74%;--tag-y:95%;--flight-time:10.5s;--flight-delay:-7.4s;--drop-delay:235ms;translate:0 -19%}
+.poem-flight{
+  display:block;position:relative;
+  --float-x:clamp(3px,.85cqw,12px);--float-y:clamp(5px,1.1cqw,16px);
+  animation:poem-flight var(--flight-time) ease-in-out var(--flight-delay) infinite;
 }
-.poem-tag:before{content:"";position:absolute;left:-8px;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:50%;background:#d6d1ca}
-.poem-tag span{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poem-flight img{width:100%;height:auto;object-fit:contain;transform:rotate(var(--bird-turn));transition:filter 220ms ease}
+.poem-card:hover img,.poem-card:focus-visible img{filter:drop-shadow(0 3px 4px #28335129)}
+.poem-tether{
+  --cord:clamp(11px,1.45cqw,22px);
+  position:absolute;left:var(--tag-x);top:var(--tag-y);width:1px;height:var(--cord);
+  transform-origin:top center;
+  animation:poem-swing var(--flight-time) ease-in-out calc(var(--flight-delay) + .45s) infinite,
+    poem-drop 680ms cubic-bezier(.3,.05,.3,1) var(--drop-delay) both;
+}
+.poem-tether::before{content:"";position:absolute;inset:0 0 -4px;background:#8c7b6b;z-index:1}
+.poem-tag{
+  position:absolute;left:50%;top:100%;width:max-content;max-width:clamp(64px,10.5cqw,152px);transform:translateX(-50%);
+  padding:7px 7px 3px;background:linear-gradient(145deg,#f0ece3,#e1d8c9);
+  clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 5px,100% 100%,0 100%,0 5px);
+  font:400 clamp(10px,1.05cqw,15px)/1.2 Lekton,monospace;text-align:center;
+}
+.poem-tag::before{content:"";position:absolute;top:2px;left:calc(50% - 2px);width:4px;height:4px;border:1px solid #9e8a76;border-radius:50%;background:#fbf6ef}
+.poem-tag span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.face-entries[inert] :is(.poem-flight,.poem-tether){animation-play-state:paused}
+@keyframes poem-flight{
+  0%,100%{transform:translate(0,0) rotate(-2deg)}
+  26%{transform:translate(var(--float-x),calc(var(--float-y) * -1)) rotate(3deg)}
+  54%{transform:translate(calc(var(--float-x) * .24),calc(var(--float-y) * -.35)) rotate(1deg)}
+  78%{transform:translate(calc(var(--float-x) * -.75),calc(var(--float-y) * .52)) rotate(-3deg)}
+}
+@keyframes poem-swing{
+  0%,100%{transform:rotate(-8deg)}
+  29%{transform:rotate(12deg)}
+  56%{transform:rotate(4deg)}
+  82%{transform:rotate(-12deg)}
+}
+@keyframes poem-drop{
+  0%{height:0;opacity:0}
+  21%{opacity:1}
+  72%{height:calc(var(--cord) * 1.16)}
+  100%{height:var(--cord)}
+}
 .category-pages{
   position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;align-items:center;
   gap:6px;pointer-events:auto;white-space:nowrap;font:italic 400 11px/1.2 var(--entries-type);color:#5e5a54;
@@ -483,8 +527,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   }
   .collage-card-art{aspect-ratio:1.43}
   .poems-home{width:94%}
-  .poem-card:nth-child(3){--tag-turn:55deg;--tag-x:56%}
-  .poem-tag{max-width:84%}
+  .poem-tag{max-width:clamp(62px,20cqw,108px)}
   .deck-front{width:53%;box-shadow:4px 5px 11px 2px #0003}
   .front-caption h2{font-size:clamp(20px,5.2cqw,34px)}
   .sheet-1{--exposed:54%;left:37%;width:36%}
@@ -519,4 +562,4 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .front-scent{min-height:24px;padding-block:2px}
   .btn.deck-action{min-height:25px}
 }
-@media(prefers-reduced-motion:reduce){.entries-filters,.deck-front,.deck-sheet,.home-orbit,.home-turntable,.home-panel,.entries-search,.entries-search-trigger svg,.collage-card-art,.poem-card img{transition:none}.home-motif,.sense-model,.entries-search{animation:none}}
+@media(prefers-reduced-motion:reduce){.entries-filters,.deck-front,.deck-sheet,.home-orbit,.home-turntable,.home-panel,.entries-search,.entries-search-trigger svg,.collage-card-art,.poem-flight img{transition:none}.home-motif,.sense-model,.entries-search,.poem-flight,.poem-tether{animation:none}}
