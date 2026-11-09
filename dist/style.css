@@ -179,12 +179,12 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   45%{translate:var(--drift-x) var(--drift-y)}
   to{translate:calc(var(--drift-x) * -.6) calc(var(--drift-y) * .38)}
 }
-.motif-taste{left:30%;top:79%;--motif-size:8;--motif-dx:2.5;--motif-dy:-1.5;--drift-time:17s;--drift-delay:-4s}
-.motif-smell{left:73.5%;top:20%;--motif-size:7.4;--motif-dx:-2;--motif-dy:1.5;--drift-time:13s;--drift-delay:-8s}
-.motif-touch{left:79%;top:61%;--motif-size:8.5;--motif-dx:-2.1;--motif-dy:-2.2;--drift-time:19s;--drift-delay:-11s}
-.motif-lavender{left:26.5%;top:22%;--motif-size:6.7;--motif-dx:1.8;--motif-dy:-1.4;--drift-time:18s;--drift-delay:-9s}
-.motif-hearing{left:20%;top:60%;--motif-size:7.2;--motif-dx:1.3;--motif-dy:1.9;--drift-time:16s;--drift-delay:-12s}
-.motif-sight{left:70%;top:77%;--motif-size:7.3;--motif-dx:1.6;--motif-dy:-1.5;--drift-time:20s;--drift-delay:-6s}
+.motif-taste{left:27.5%;top:79%;--motif-size:8;--motif-dx:2.5;--motif-dy:-1.5;--drift-time:17s;--drift-delay:-4s}
+.motif-smell{left:76.5%;top:20%;--motif-size:7.4;--motif-dx:-2;--motif-dy:1.5;--drift-time:13s;--drift-delay:-8s}
+.motif-touch{left:82%;top:61%;--motif-size:8.5;--motif-dx:-2.1;--motif-dy:-2.2;--drift-time:19s;--drift-delay:-11s}
+.motif-lavender{left:24%;top:22%;--motif-size:6.7;--motif-dx:1.8;--motif-dy:-1.4;--drift-time:18s;--drift-delay:-9s}
+.motif-hearing{left:17.5%;top:60%;--motif-size:7.2;--motif-dx:1.3;--motif-dy:1.9;--drift-time:16s;--drift-delay:-12s}
+.motif-sight{left:72.5%;top:77%;--motif-size:7.3;--motif-dx:1.6;--motif-dy:-1.5;--drift-time:20s;--drift-delay:-6s}
 
 .entries-filters{
   --filter-fade:1500ms;position:absolute;top:38.4%;left:4.2%;width:9.7%;display:grid;justify-items:center;
@@ -200,9 +200,12 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .entries-deck{
   --card-angle:-9deg;--card-spread:3px;
   position:absolute;left:var(--home-center);top:var(--scene-center-y);width:52.71%;height:43.89%;
-  transform:translate(-50%,-50%);
+  transform:translate(calc(-50% + var(--stack-offset,0%)),-50%);
   perspective:clamp(620px,95cqw,1435px);perspective-origin:38% 55%;transform-style:preserve-3d;pointer-events:none;
 }
+.entries-deck[data-sheets="0"]{--stack-offset:28.23%}
+.entries-deck[data-sheets="1"]{--stack-offset:15.6%}
+.entries-deck[data-sheets="2"]{--stack-offset:7.5%}
 .deck-front,.deck-sheet{
   transform:translate3d(calc(var(--card-index,0) * var(--card-spread)),var(--card-lift,0px),calc(var(--card-depth,12px) + var(--card-pop,0px))) rotateY(var(--card-angle));
   transition:transform 520ms cubic-bezier(.22,.61,.36,1),background-color 200ms ease;
@@ -257,6 +260,77 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .sheet-1{--exposed:63%;--card-index:1;--card-depth:-12px;left:29.23%;top:3%;width:39.52%;height:93.04%;z-index:3;background:#e4e4e4}
 .sheet-2{--exposed:51%;--card-index:2;--card-depth:-34px;left:53.2%;top:-.5%;width:31.87%;height:81.44%;z-index:2;background:#ececec}
 .sheet-3{--exposed:66%;--card-index:3;--card-depth:-57px;left:77.67%;top:-4.5%;width:22.33%;height:64.97%;z-index:1;background:#f5f5f5}
+.journal-home,.collage-home,.poems-home{
+  position:absolute;inset:0;margin:auto;color:var(--navy);pointer-events:auto;
+}
+.journal-home{width:85%;display:grid;grid-template-columns:20% minmax(0,1fr) 20%;align-items:center}
+.journal-tabs{display:grid;gap:clamp(7px,1.05cqw,16px);align-content:center;min-width:0}
+.btn.journal-tab{
+  display:block;width:100%;min-width:0;min-height:clamp(26px,2.65cqw,40px);padding:3px 6px;
+  border:0;border-radius:0;background:#e9e7e4;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font:italic clamp(10px,.95cqw,14px)/1.2 var(--entries-type);
+}
+.btn.journal-tab:hover,.btn.journal-tab:focus-visible{background:#dedbd5}
+.journal-paper{
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:clamp(8px,1.4cqw,22px);
+  height:100%;padding:clamp(15px,2.3cqw,35px);background:#f3efe9;
+  box-shadow:4px 5px 11px #0003;overflow:hidden;
+}
+.journal-paper h2{
+  font:400 clamp(21px,2cqw,31px)/1.1 Lekton,monospace;overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.journal-paper p{
+  align-self:start;max-height:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:7;overflow:hidden;
+  font:400 clamp(13px,1.16cqw,17px)/1.55 var(--entries-type);
+  white-space:pre-wrap;overflow-wrap:anywhere;color:#524d47;
+}
+.btn.journal-open{justify-self:start;min-height:30px;border:0;padding:0;background:none;font:italic 400 clamp(12px,1.08cqw,16px) var(--entries-type)}
+.btn.journal-open:hover{text-decoration:underline;text-underline-offset:4px}
+.journal-open svg{order:2;width:16px}
+.collage-home{
+  width:80%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));
+  gap:clamp(9px,1.25cqw,19px);
+}
+.collage-home:not(:has(.collage-card:nth-child(3))){height:calc(50% - 5px);grid-template-rows:minmax(0,1fr)}
+.collage-card{
+  min-width:0;min-height:0;border:0;padding:0;background:none;color:inherit;
+  display:grid;grid-template-rows:auto minmax(0,1fr);gap:4px;text-align:left;
+}
+.collage-card:last-child:nth-child(odd){grid-column:1 / -1;width:calc((100% - clamp(9px,1.25cqw,19px)) / 2);justify-self:center}
+.collage-card-title{font:400 clamp(12px,1.12cqw,17px)/1.1 Lekton,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.collage-card-art{min-height:0;background:var(--navy);padding:6% 9%;box-shadow:4px 5px 10px #0003;transition:transform 200ms ease}
+.collage-card:hover .collage-card-art,.collage-card:focus-visible .collage-card-art{transform:translateY(-4px)}
+.collage-card-art .scene-art{height:100%;width:100%;aspect-ratio:auto}
+.collage-card-art .fragment{font-size:clamp(9px,.85cqw,13px);padding:4% 5%;-webkit-line-clamp:2}
+.collage-card-art .margin-note{font-size:clamp(8px,.7cqw,11px);padding:1px 3px}
+.collage-card-art .little-photo{border-width:2px}
+.poems-home{display:flex;align-items:center;justify-content:center;gap:1.2cqw}
+.poem-card{
+  --bird-turn:0deg;--tag-turn:14deg;--tag-x:81%;--tag-y:82%;
+  position:relative;display:block;width:30%;max-width:245px;min-width:0;
+  padding:0;border:0;background:none;color:inherit;
+}
+.poem-card:not(:only-child):nth-child(1){translate:0 11%}
+.poem-card:nth-child(2){--bird-turn:19deg;--tag-turn:42deg;--tag-x:75%;--tag-y:88%;translate:0 -33%}
+.poem-card:nth-child(3){--bird-turn:22deg;--tag-turn:65deg;--tag-x:69%;--tag-y:89%;translate:0 -19%}
+.poem-card img{width:100%;height:auto;object-fit:contain;transform:rotate(var(--bird-turn));transition:transform 240ms ease}
+.poem-card:hover img,.poem-card:focus-visible img{transform:translateY(-5px) rotate(var(--bird-turn))}
+.poem-tag{
+  position:absolute;left:var(--tag-x);top:var(--tag-y);width:max-content;max-width:94%;
+  padding:4px 6px;background:#ece9e4;
+  transform:rotate(var(--tag-turn));transform-origin:0 50%;
+  font:italic 400 clamp(10px,.96cqw,14px)/1.25 var(--entries-type);
+}
+.poem-tag:before{content:"";position:absolute;left:-8px;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:50%;background:#d6d1ca}
+.poem-tag span{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.category-pages{
+  position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;align-items:center;
+  gap:6px;pointer-events:auto;white-space:nowrap;font:italic 400 11px/1.2 var(--entries-type);color:#5e5a54;
+}
+.entries-deck:has(.category-pages) :is(.collage-home,.poems-home){bottom:32px}
+.category-pages .icon-btn{min-height:25px;width:26px;padding:2px;border:0;background:none}
+.category-pages svg{width:15px}
 .entries-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .entries-search{
   position:absolute;top:79.74%;left:var(--home-center);transform:translateX(-50%);
@@ -266,7 +340,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   animation:search-drift 6s ease-in-out infinite;
 }
 .entries-search.is-expanded{
-  width:clamp(252px,46cqw,640px);min-height:clamp(42px,4cqw,58px);opacity:1;
+  width:clamp(224px,41cqw,565px);min-height:clamp(39px,3.7cqw,52px);opacity:1;
   outline:1px solid var(--navy);animation-play-state:paused;
 }
 @media(hover:hover) and (pointer:fine){
@@ -400,6 +474,17 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
     width:min(calc(100% - 32px),530px);
     height:44%;max-height:395px;
   }
+  .entries-deck[data-sheets="0"]{--stack-offset:23.5%}
+  .entries-deck[data-sheets="1"]{--stack-offset:13.5%}
+  .entries-deck[data-sheets="2"]{--stack-offset:5.5%}
+  .journal-home{width:98%;grid-template-columns:18% minmax(0,1fr) 18%}
+  .collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){
+    width:88%;height:max-content;max-height:100%;grid-template-rows:none;grid-auto-rows:minmax(0,1fr);
+  }
+  .collage-card-art{aspect-ratio:1.43}
+  .poems-home{width:94%}
+  .poem-card:nth-child(3){--tag-turn:55deg;--tag-x:56%}
+  .poem-tag{max-width:84%}
   .deck-front{width:53%;box-shadow:4px 5px 11px 2px #0003}
   .front-caption h2{font-size:clamp(20px,5.2cqw,34px)}
   .sheet-1{--exposed:54%;left:37%;width:36%}
@@ -407,11 +492,11 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .sheet-3{--exposed:50%;left:79%;width:21%}
   .deck-sheet-control span{font-size:10px;margin:0 5px 9px 0;padding:0 1px}
   .entries-search{top:80.5%}
-  .entries-search.is-expanded{width:min(calc(100% - 36px),460px)}
+  .entries-search.is-expanded{width:min(80%,405px)}
   .home-dock{bottom:3%}
-  .motif-taste{left:28%;top:78.5%}.motif-smell{left:88%;top:25.2%}
-  .motif-touch{left:88%;top:66%}.motif-lavender{left:12%;top:25.2%}
-  .motif-hearing{left:12%;top:72.5%}.motif-sight{left:72%;top:78.5%}
+  .motif-taste{left:25%;top:78.5%}.motif-smell{left:89%;top:25.2%}
+  .motif-touch{left:90%;top:66%}.motif-lavender{left:11%;top:25.2%}
+  .motif-hearing{left:10%;top:72.5%}.motif-sight{left:75%;top:78.5%}
   .face-senses .home-panel{--sense-center-x:51.5%;--sense-center-y:46.5%}
   .sense-eyes{left:9%;top:31%;width:34%;height:16%}
   .sense-ears{left:49%;top:25%;width:30%;height:16%}
@@ -422,6 +507,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .home-next{top:75.4%}
 }
 @media(max-height:560px){
+  .journal-paper p{-webkit-line-clamp:4}
   .entries-search{min-height:34px}
   .entries-search.is-expanded{min-height:38px}
   .entries-search button{min-height:34px;padding-block:5px}
@@ -433,4 +519,4 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .front-scent{min-height:24px;padding-block:2px}
   .btn.deck-action{min-height:25px}
 }
-@media(prefers-reduced-motion:reduce){.entries-filters,.deck-front,.deck-sheet,.home-orbit,.home-turntable,.home-panel,.entries-search,.entries-search-trigger svg{transition:none}.home-motif,.sense-model,.entries-search{animation:none}}
+@media(prefers-reduced-motion:reduce){.entries-filters,.deck-front,.deck-sheet,.home-orbit,.home-turntable,.home-panel,.entries-search,.entries-search-trigger svg,.collage-card-art,.poem-card img{transition:none}.home-motif,.sense-model,.entries-search{animation:none}}

@@ -231,15 +231,66 @@ function frontSheet(entry) {
     ${entry.scent ? scentChip(entry.scent,'front-scent') : ''}
   </article>`;
 }
+function journalPreview(entry, next) {
+  const title = entry.title || 'Untitled memory';
+  return `<div class="journal-home">
+    <div class="journal-tabs" role="group" aria-label="Switch journal entries">
+      ${next.slice(0,4).map(item => button('deck-select',item.title || 'Untitled memory','journal-tab',item.id)).join('')}
+    </div>
+    <article class="journal-paper">
+      <h2>${esc(title)}</h2>
+      <p>${esc(entry.journal)}</p>
+      ${button(entry.status === 'draft' ? 'resume' : 'entry-journal',entry.status === 'draft' ? 'Continue Writing' : 'Open journal','journal-open',entry.id,'arrow')}
+    </article>
+  </div>`;
+}
+function categoryGallery(list, index) {
+  const isCollage = filter === 'Collages';
+  const size = isCollage ? 4 : 3;
+  const start = index - index % size;
+  const end = start + size;
+  const cards = list.slice(start,end).map(entry => {
+    const title = esc(entry.title || 'Untitled memory');
+    if (isCollage) {
+      return `<button class="collage-card" type="button" data-action="entry-collage" data-value="${esc(entry.id)}" aria-label="Open collage: ${title}">
+        <span class="collage-card-title">${title}</span>
+        <div class="collage-card-art">${scene({...entry,showScent:false})}</div>
+      </button>`;
+    }
+    const action = entry.status === 'draft' ? 'resume' : 'entry-poem';
+    return `<button class="poem-card" type="button" data-action="${action}" data-value="${esc(entry.id)}" aria-label="Open poem: ${title}">
+      <img src="assets/entries/origami-bird.png" width="450" height="452" alt="">
+      <span class="poem-tag"><span>${title}</span></span>
+    </button>`;
+  }).join('');
+  const pages = list.length > size ? `<nav class="category-pages" aria-label="${filter} pages">
+    ${start > 0 ? iconButton('deck-select','Previous page',list[start-size].id,'back') : ''}
+    <span>${start+1}–${Math.min(end,list.length)} of ${list.length}</span>
+    ${end < list.length ? iconButton('deck-select','Next page',list[end].id,'arrow') : ''}
+  </nav>` : '';
+  return `<div class="${isCollage ? 'collage-home' : 'poems-home'}">${cards}</div>${pages}`;
+}
 function renderEntries() {
   const list = filteredEntries();
   const index = Math.max(0,list.findIndex(entry => entry.id === deckEntryId));
   const front = list[index];
   deckEntryId = front?.id || '';
   const next = list.slice(index+1).concat(list.slice(0,index));
+  const deck = document.querySelector('#entries');
+  const category = front && ['Journal','Collages','Poems'].includes(filter);
+  deck.setAttribute('aria-label',category ? filter : 'Switch between diary entries');
+  if (category) {
+    deck.removeAttribute('aria-roledescription');
+    delete deck.dataset.sheets;
+    const content = filter === 'Journal' ? journalPreview(front,next) : categoryGallery(list,index);
+    const status = filter === 'Journal' ? `Journal ${index+1} of ${list.length}. ${esc(front.title || 'Untitled memory')}.` : `${list.length} ${filter.toLowerCase()} available.`;
+    deck.innerHTML = `${content}<p class="entries-status" role="status">${status}</p>`;
+    return;
+  }
+  deck.setAttribute('aria-roledescription','carousel');
   const back = next.slice(0,3);
   if (front && !query && back.length < 3) back.push(null);
-  const deck = document.querySelector('#entries');
+  deck.dataset.sheets = back.length;
   deck.innerHTML = `
     ${back.map((entry,i) => deckSheet(entry,i+1)).reverse().join('')}
     ${frontSheet(front)}
@@ -380,6 +431,11 @@ function backLink(href,label = 'Back to diary') {
 }
 function viewTitle(tag,title,description = '') {
   return `<div class="view-title"><p class="kicker">${esc(tag)}</p><h1>${esc(title)}</h1>${description ? `<p>${esc(description)}</p>` : ''}</div>`;
+}
+function openEntry(id, tab) {
+  detailId = id;
+  detailTab = tab;
+  go('entry',id);
 }
 function renderIndex() {
   const scents = allScents().filter(item => item.count);
@@ -751,6 +807,9 @@ const actions = {
   },
   resume:id => go('edit',id),
   entry:id => go('entry',id),
+  'entry-collage':id => openEntry(id,'scene'),
+  'entry-journal':id => openEntry(id,'journal'),
+  'entry-poem':id => openEntry(id,'poem'),
   bookmark:id => setBookmark('entryBookmarks',id),
   'bookmark-scent':key => setBookmark('scentBookmarks',key),
   'detail-tab':value => { detailTab = value; render(); },
