@@ -741,15 +741,17 @@ body:has(#main > .view){
 .sense-capture-form:has(.capture-models) .sense-writing-paper{background:transparent;padding:0}
 .sense-capture-form:has(.capture-models) #capture-detail{min-height:clamp(180px,33dvh,340px);padding:24px;background:#f4f1eb}
 .entries-deck:has(.poem-pages) .poems-home{bottom:0;width:90%}
-.poem-pages{left:auto;right:-5%;top:50%;bottom:auto;transform:translateY(-50%)}
-.poem-pages .icon-btn{width:36px;min-height:40px}
+.poem-pages{left:-5%;right:-5%;top:50%;bottom:auto;height:40px;transform:translateY(-50%);pointer-events:none}
+.poem-pages .icon-btn{position:absolute;top:0;width:36px;min-height:40px;pointer-events:auto}
+.poem-pages .icon-btn[aria-label="Previous page"]{left:0}
+.poem-pages .icon-btn[aria-label="Next page"]{right:0}
 .poem-pages svg{width:25px;height:25px}
 .sense-artwork::before{background:radial-gradient(circle at var(--light-x,28%) 26%,#e0e8f5 0%,#a3b4d2 32%,#6c83ac 64%,#3e557c 90%,#2c4164 100%);mask-image:radial-gradient(circle,#000 58%,#000d 65%,transparent 72%);filter:blur(2px)}
 @media(max-width:650px){
   .capture-models{position:relative;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;min-height:20px;margin-bottom:14px}
   .capture-model{position:static;width:48px;height:66px}
   .capture-model small{font-size:13px}
-  .poem-pages{right:0}
+  .poem-pages{left:0;right:0}
   .entries-deck:has(.poem-pages) .poems-home{width:85%;right:8%}
 }
 @media(prefers-reduced-motion:reduce){.capture-model,.capture-model .sense-model{animation:none}}
@@ -1029,8 +1031,8 @@ html[data-theme=dark] body,html[data-theme=dark] body:has(#main > .view){--ink:#
 .mixed-entry > .poem-card:not(.journal-leaf){--tag-x:65%;--tag-y:90%}
 
 .entries-deck:has(.poem-pages) .collage-home{bottom:0}
-.entries-deck:has(.collage-home) .poem-pages{right:calc((48cqw - 52.71cqw)/2 - 5%)}
-@media(max-width:700px){.entries-deck:has(.collage-home) .poem-pages{right:0}}
+.entries-deck:has(.collage-home) .poem-pages{left:calc((48cqw - 52.71cqw)/2 - 5%);right:calc((48cqw - 52.71cqw)/2 - 5%)}
+@media(max-width:700px){.entries-deck:has(.collage-home) .poem-pages{left:0;right:0}}
 
 @media(min-width:701px){
   .collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){height:calc(50% - clamp(12px,2dvh,18px));grid-template-rows:minmax(0,1fr)}
