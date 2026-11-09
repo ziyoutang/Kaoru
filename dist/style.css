@@ -409,7 +409,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .category-pages svg{width:15px}
 .entries-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .entries-search{
-  position:absolute;top:79.74%;left:var(--home-center);transform:translateX(-50%);
+  position:absolute;top:79.74%;left:var(--home-center);transform:translateX(-50%);margin-top:16px;
   width:clamp(44px,4.2cqw,58px);min-height:34px;
   display:flex;align-items:stretch;border-radius:99px;background:#f8f6f3;opacity:.75;
   transition:width 360ms cubic-bezier(.22,.61,.36,1),min-height 360ms ease,opacity 240ms ease;
@@ -738,13 +738,13 @@ body:has(#main > .view){
 .sense-wheel-item:hover .sense-wheel-circle,.sense-wheel-item:focus-visible .sense-wheel-circle{background:#c4ccdb;box-shadow:0 5px 16px #28335126}
 .sense-wheel-empty{font-size:14px;text-align:center}
 @keyframes sense-wheel-reveal{from{opacity:0;translate:-16px 0}to{opacity:1;translate:0 0}}
-.sense-artwork{background:none;isolation:isolate}
+.sense-artwork{background:none;isolation:auto}
 .sense-artwork::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:min(100%,360px);height:auto;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 30% 26%,#e0e8f5 0%,#a3b4d2 32%,#6c83ac 64%,#3e557c 90%,#2c4164 100%);box-shadow:inset -15px -18px 30px #263a602e,0 20px 30px -15px #354f7745;transform:translate(-50%,-50%);animation:sense-sphere-float 8s ease-in-out infinite}
 .sense-result-view .sense-artwork::before{width:min(90%,34dvh,320px)}
 @keyframes sense-sphere-float{0%,100%{translate:0 5px;rotate:-3deg}50%{translate:0 -7px;rotate:3deg}}
 @media(hover:hover){
-  .deck-front .deck-action[data-action="resume"]{opacity:0;transition:opacity .3s ease}
-  .deck-front:hover .deck-action[data-action="resume"],.deck-front:focus-within .deck-action[data-action="resume"]{opacity:1}
+  .deck-front .deck-action:is([data-action="resume"],[data-action="complete-draft"]){opacity:0;transition:opacity .3s ease}
+  .deck-front:hover .deck-action:is([data-action="resume"],[data-action="complete-draft"]),.deck-front:focus-within .deck-action:is([data-action="resume"],[data-action="complete-draft"]){opacity:1}
 }
 @media(max-width:650px){
   .sense-choices.is-browsing{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -808,3 +808,5 @@ body:has(#main > .view){
   .entries-home:has(.collage-home) .home-next{top:81%}
   .entries-home:has(.collage-home) .entries-search{top:87%}
 }
+
+.deck-front .deck-action:is([data-action="resume"],[data-action="complete-draft"]){font-size:clamp(12px,1.05cqw,16px)}
