@@ -725,3 +725,31 @@ body:has(#main > .view){
 @media(max-width:650px){
   .sense-writing-paper{width:100%}
 }
+
+/* Saved senses appear only after choosing reuse. */
+.sense-choices{grid-template-columns:repeat(2,minmax(0,1fr));max-width:900px}
+.sense-choices.is-browsing{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1240px}
+.sense-wheel-panel[hidden]{display:none}
+.sense-wheel-panel{min-width:0;animation:sense-wheel-reveal .5s ease both}
+.sense-wheel-panel > p{text-align:center;color:var(--sub);font-size:13px;margin-bottom:12px}
+.sense-wheel{height:clamp(260px,45dvh,440px);overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y proximity;padding:70px 12px 70px 42px;scrollbar-width:thin;scrollbar-color:#d9d8d2 transparent}
+.sense-wheel-item{display:flex;align-items:center;gap:14px;min-height:88px;scroll-snap-align:center;transform-origin:center;transition:transform .18s ease,opacity .18s ease;font:400 19px/1.15 Lekton,monospace;overflow-wrap:anywhere}
+.sense-wheel-circle{display:grid;place-items:center;width:58px;height:58px;flex:none;border-radius:50%;background:#d9d8d2;box-shadow:inset -4px -5px 10px #96988f21}
+.sense-wheel-item:hover .sense-wheel-circle,.sense-wheel-item:focus-visible .sense-wheel-circle{background:#c4ccdb;box-shadow:0 5px 16px #28335126}
+.sense-wheel-empty{font-size:14px;text-align:center}
+@keyframes sense-wheel-reveal{from{opacity:0;translate:-16px 0}to{opacity:1;translate:0 0}}
+.sense-artwork{background:none;isolation:isolate}
+.sense-artwork::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:min(100%,360px);height:auto;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 30% 26%,#e0e8f5 0%,#a3b4d2 32%,#6c83ac 64%,#3e557c 90%,#2c4164 100%);box-shadow:inset -15px -18px 30px #263a602e,0 20px 30px -15px #354f7745;transform:translate(-50%,-50%);animation:sense-sphere-float 8s ease-in-out infinite}
+.sense-result-view .sense-artwork::before{width:min(90%,34dvh,320px)}
+@keyframes sense-sphere-float{0%,100%{translate:0 5px;rotate:-3deg}50%{translate:0 -7px;rotate:3deg}}
+@media(hover:hover){
+  .deck-front .deck-action[data-action="resume"]{opacity:0;transition:opacity .3s ease}
+  .deck-front:hover .deck-action[data-action="resume"],.deck-front:focus-within .deck-action[data-action="resume"]{opacity:1}
+}
+@media(max-width:650px){
+  .sense-choices.is-browsing{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sense-wheel-panel{grid-column:1 / -1;width:min(100%,340px);justify-self:center}
+  .sense-wheel{height:250px}
+  .sense-naming-scene .sense-artwork::before{width:150px}
+}
+@media(prefers-reduced-motion:reduce){.sense-wheel-panel,.sense-artwork::before{animation:none}.sense-wheel-item{transition:none}}

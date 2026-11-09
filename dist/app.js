@@ -500,13 +500,36 @@ function renderSenseSelect(type) {
     <h1 class="entries-status">Sense Selection</h1>
     <div class="flow-choices sense-choices">
       <a class="flow-tile" href="${route('capture',type)}"><strong>Capture a new sense</strong></a>
-      <a class="flow-tile" href="#reuse-sense"><strong>Reuse an existing sense</strong></a>
-      <svg class="sense-orbit-art" viewBox="0 0 142 205" aria-hidden="true">
-        <g fill="#d9d8d2"><circle cx="60" cy="17" r="14"/><circle cx="86" cy="54" r="14"/><circle cx="99" cy="103" r="14"/><circle cx="93" cy="145" r="14"/><circle cx="68" cy="182" r="14"/><circle cx="14" cy="103" r="2"/><circle cx="36" cy="103" r="2"/><circle cx="58" cy="103" r="2"/></g>
-        <path d="M126 83q17 25-1 52m0 0 0-7m0 7 7-1" fill="none" stroke="#aaa79e" stroke-linecap="round"/>
-      </svg>
+      <button class="flow-tile" data-action="show-sense-wheel" aria-expanded="false" aria-controls="saved-sense-wheel"><strong>Reuse an existing sense</strong></button>
+      <section id="saved-sense-wheel" class="sense-wheel-panel" hidden aria-label="Saved senses">
+        <p>Scroll to browse your senses</p>
+        <div class="sense-wheel" tabindex="0" aria-label="Browse saved senses">
+          ${senseRecords().length ? senseRecords().map(note => `<a class="sense-wheel-item" href="${route('captured',note.id)}"><span class="sense-wheel-circle">${icon(note.type === 'nose' ? 'scent' : 'arrow')}</span><span>${esc(note.name)}</span></a>`).join('') : '<p class="sense-wheel-empty">No saved senses yet. Capture a new sense to start your collection.</p>'}
+        </div>
+      </section>
     </div>
   </div>`;
+}
+function shapeSenseWheel() {
+  const wheel = document.querySelector('.sense-wheel');
+  if (!wheel) return;
+  const center = wheel.getBoundingClientRect().top + wheel.clientHeight / 2;
+  wheel.querySelectorAll('.sense-wheel-item').forEach(item => {
+    const rect = item.getBoundingClientRect();
+    const distance = Math.min(1,Math.abs(rect.top + rect.height / 2 - center) / (wheel.clientHeight / 2));
+    item.style.transform = `translateX(${-32 * distance * distance}px) scale(${1 - distance * .18})`;
+    item.style.opacity = 1 - distance * .45;
+  });
+}
+function showSenseWheel() {
+  const panel = document.querySelector('#saved-sense-wheel');
+  if (!panel.hidden) return;
+  panel.hidden = false;
+  panel.closest('.sense-choices').classList.add('is-browsing');
+  document.querySelector('[data-action="show-sense-wheel"]').setAttribute('aria-expanded','true');
+  const wheel = panel.querySelector('.sense-wheel');
+  wheel.addEventListener('scroll',shapeSenseWheel,{passive:true});
+  requestAnimationFrame(shapeSenseWheel);
 }
 function renderCapture(type) {
   const selectedType = Object.hasOwn(senses,type) ? type : senseDraft?.type || 'nose';
@@ -1044,6 +1067,7 @@ function carryLine(value) {
   if (line) newDraft({parentId:id,note:line.slice(0,110)});
 }
 const actions = {
+  'show-sense-wheel':showSenseWheel,
   new:() => newDraft(),
   'home-view':value => selectHomeView(Number(value)),
   'home-turn':value => rotateHome(Number(value)),
