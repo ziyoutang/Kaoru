@@ -326,30 +326,25 @@ async function turnPoemPage(id) {
   selectDeckEntry(id);
   deck.querySelector('.poems-home').animate([{opacity:0},{opacity:1}],{duration:420,easing:'ease-out'});
 }
-function selectDeckEntry(id) {
+async function selectDeckEntry(id) {
   const deck = document.querySelector('#entries');
+  if (!deck || deck.dataset.switching || deckEntryId === id) return;
   const motion = deck.getAttribute('aria-roledescription') === 'carousel' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const previous = new Map();
+  const currentFilter = filter;
   if (motion) {
-    deck.querySelectorAll('[data-deck-card]').forEach(card => previous.set(card.dataset.deckCard,card.getBoundingClientRect()));
+    deck.dataset.switching = 'true';
+    await deck.animate([{opacity:1,translate:'0px 0px'},{opacity:0,translate:'-10px 0px'}],{duration:180,easing:'ease-in',fill:'forwards'}).finished;
+    delete deck.dataset.switching;
+    if (!deck.isConnected || filter !== currentFilter) {
+      deck.getAnimations().forEach(animation => animation.cancel());
+      return;
+    }
   }
   deckEntryId = id;
   renderEntries();
   if (motion) {
-    deck.querySelectorAll('[data-deck-card]').forEach(card => {
-      const from = previous.get(card.dataset.deckCard);
-      const to = card.getBoundingClientRect();
-      if (!from || !to.width || !to.height) return;
-      const x = from.x + from.width/2 - to.x - to.width/2;
-      const y = from.y + from.height/2 - to.y - to.height/2;
-      const front = card.classList.contains('deck-front');
-      const arc = Math.min(18,to.height * .07);
-      card.animate([
-        {translate:`${x}px ${y}px ${front ? -24 : 20}px`,scale:`${from.width/to.width} ${from.height/to.height}`,rotate:`y ${front ? -13 : 11}deg`},
-        {translate:`${x*.38}px ${y*.38 + (front ? -arc : arc*.45)}px ${front ? 18 : -20}px`,rotate:`y ${front ? 5 : -6}deg`,offset:.58},
-        {translate:'0px 0px 0px',scale:'1',rotate:'y 0deg'}
-      ],{duration:560,easing:'cubic-bezier(.22,.61,.36,1)'});
-    });
+    deck.getAnimations().forEach(animation => animation.cancel());
+    deck.animate([{opacity:0,translate:'10px 0px'},{opacity:1,translate:'0px 0px'}],{duration:420,easing:'cubic-bezier(.22,.61,.36,1)'});
   }
   deck.focus({preventScroll:true});
 }
@@ -584,10 +579,10 @@ function updateCaptureModels() {
   document.querySelector('#capture-detected').textContent = types.length ? 'Senses noticed: ' + types.map(type => senses[type][0]).join(', ') : '';
   if (types.length) window.KaoruSenses.mount(container);
 }
-function senseArtwork(type,name = '',linked = false) {
-  const labels = [senses[type]?.[0] || 'Memory',name || 'Memory',linked ? 'Linked' : 'Sense'];
-  return `<div class="sense-artwork" tabindex="0" role="group" aria-label="Sensory sphere. Scroll sideways, drag, or use left and right arrow keys to browse its three labels.">
-    <div class="sense-orbit">${labels.map((label,index) => `<div class="sense-orbit-anchor" style="--slot:${index * 120}deg"><span>${esc(label)}</span></div>`).join('')}</div>
+function senseArtwork(types) {
+  types = [...new Set(types)].filter(type => Object.hasOwn(senses,type));
+  return `<div class="sense-artwork" data-types="${types.join(',')}" tabindex="0" role="group" aria-label="Sensory sphere. Scroll sideways, drag, or use left and right arrow keys to browse its sense models.">
+    <div class="sense-orbit">${types.map((type,index) => `<div class="sense-orbit-anchor" style="--slot:${index * 360 / types.length}deg"><span class="sense-orbit-model" role="img" aria-label="${senses[type][0]}"><canvas class="sense-model" data-sense-model="${type}" aria-hidden="true"></canvas></span></div>`).join('')}</div>
   </div>`;
 }
 function renderSenseNaming() {
@@ -597,7 +592,7 @@ function renderSenseNaming() {
     ${backLink(route('capture',senseDraft.type),'Back to capture')}
     <h1 class="entries-status">Name your sense</h1>
     <div class="sense-naming-scene">
-      ${senseArtwork(senseDraft.type)}
+      ${senseArtwork(senseDraft.types || [senseDraft.type])}
       <form id="name-sense" class="sense-naming-form">
         <div class="field"><label for="capture-name">Sense name</label><input id="capture-name" name="name" placeholder="Wet pavement, warm linen…" maxlength="55" required></div>
         <div class="field"><label for="sense-memory-detail">Sensory memory</label><textarea id="sense-memory-detail" name="detail" maxlength="220" required>${esc(senseDraft.detail)}</textarea></div>
@@ -624,8 +619,8 @@ function renderCaptured(id) {
   const note = senseRecords().find(item => item.id === id);
   main.innerHTML = `<div class="wrap view choice-view sense-result-view" data-node-id="24:457">
     ${backLink('#sense-select','Back to Sense Selection')}
-    ${note ? `${senseArtwork(note.type,note.name,Boolean(note.memoryId))}
-      <div class="captured-sense"><h1>${note.detail ? 'Senses captured.' : 'Sense ready.'}</h1><p class="entries-status">${esc(note.name)}</p>
+    ${note ? `${senseArtwork(note.types || [note.type])}
+      <div class="captured-sense"><h1>${note.detail ? 'Senses captured.' : 'Sense ready.'}</h1><p class="captured-sense-name">${esc(note.name)}</p>
         ${note.detail ? `<p>${esc(note.detail)}</p>` : ''}
         ${note.memoryId ? `<a href="${route('entry',note.memoryId)}" class="btn link">Open linked memory ${icon('arrow')}</a>` : ''}
       </div>
@@ -854,6 +849,8 @@ function render(focus = false) {
   else if (page === 'scent') renderScent(id);
   else if (page === 'saved') renderSaved();
   else renderDiary();
+  const sphere = main.querySelector('.sense-artwork');
+  if (sphere?.querySelector('.sense-model')) window.KaoruSenses.mount(sphere);
   if (focus) { window.scrollTo(0,0); main.focus({preventScroll:true}); }
   if (pendingSceneEdit) {
     const selection = pendingSceneEdit;
@@ -1214,6 +1211,14 @@ document.addEventListener('click', event => {
 });
 document.addEventListener('input', event => {
   if (event.target.id === 'capture-detail') updateCaptureModels();
+  if (event.target.id === 'sense-memory-detail') {
+    const types = detectSenses(event.target.value);
+    const sphere = main.querySelector('.sense-artwork');
+    if (sphere && sphere.dataset.types !== types.join(',')) {
+      sphere.outerHTML = senseArtwork(types);
+      if (types.length) window.KaoruSenses.mount(main.querySelector('.sense-artwork'));
+    }
+  }
   if (event.target.id === 'search') { query = event.target.value; deckEntryId = ''; renderEntries(); return; }
   const {field:key,photoCrop:cropId} = event.target.dataset;
   if (!active || (!key && !cropId)) return;
