@@ -244,24 +244,9 @@ function frontSheet(entry) {
     ${entry.scent ? scentChip(entry.scent,'front-scent') : ''}
   </article>`;
 }
-function journalPreview(entry, next) {
-  const title = entry.title || 'Untitled memory';
-  return `<div class="journal-home">
-    <div class="journal-tabs" role="group" aria-label="Switch journal entries">
-      ${next.slice(0,4).map(item => button('deck-select',item.title || 'Untitled memory','journal-tab',item.id)).join('')}
-    </div>
-    <article class="journal-paper">
-      <div class="journal-heading">
-        <time datetime="${esc(entry.created)}">${dateLabel(entry.created)}</time>
-        <h2>${esc(title)}</h2>
-      </div>
-      <p>${esc(entry.journal)}</p>
-      ${button(entry.status === 'draft' ? 'resume' : 'entry-journal',entry.status === 'draft' ? 'Continue Writing' : 'Open journal','journal-open',entry.id,'arrow')}
-    </article>
-  </div>`;
-}
 function categoryGallery(list, index) {
   const isCollage = filter === 'Collages';
+  const isJournal = filter === 'Journal';
   const size = isCollage ? 4 : 3;
   const start = index - index % size;
   const end = start + size;
@@ -272,6 +257,14 @@ function categoryGallery(list, index) {
         <button class="collage-card-title" type="button" data-action="entry-collage" data-value="${esc(entry.id)}" aria-label="Open collage: ${title}">${title}</button>
         <div class="collage-card-art">${scene(entry,true)}</div>
       </article>`;
+    }
+    if (isJournal) {
+      return `<button class="poem-card journal-leaf" type="button" data-action="${entry.status === 'draft' ? 'resume' : 'entry-journal'}" data-value="${esc(entry.id)}" aria-label="Open journal: ${title}">
+        <span class="poem-flight">
+          <span class="journal-leaf-paper"><time>${dateLabel(entry.created)}</time><span class="journal-leaf-text">${esc(entry.journal || 'A memory waiting to be written…')}</span></span>
+          <span class="poem-tether"><span class="poem-tag"><span>${title}</span></span></span>
+        </span>
+      </button>`;
     }
     const action = entry.status === 'draft' ? 'resume' : 'entry-poem';
     return `<button class="poem-card" type="button" data-action="${action}" data-value="${esc(entry.id)}" aria-label="Open poem: ${title}">
@@ -286,7 +279,7 @@ function categoryGallery(list, index) {
     <span class="${isCollage ? '' : 'entries-status'}">${start+1}–${Math.min(end,list.length)} of ${list.length}</span>
     ${end < list.length ? iconButton(isCollage ? 'deck-select' : 'poem-page','Next page',list[end].id,'arrow') : ''}
   </nav>` : '';
-  return `<div class="${isCollage ? 'collage-home' : 'poems-home'}">${cards}</div>${pages}`;
+  return `<div class="${isCollage ? 'collage-home' : isJournal ? 'poems-home journal-leaves' : 'poems-home'}">${cards}</div>${pages}`;
 }
 function renderEntries() {
   const list = filteredEntries();
@@ -300,7 +293,7 @@ function renderEntries() {
   if (category) {
     deck.removeAttribute('aria-roledescription');
     delete deck.dataset.sheets;
-    const content = filter === 'Journal' ? journalPreview(front,next) : categoryGallery(list,index);
+    const content = categoryGallery(list,index);
     const status = filter === 'Journal' ? `Journal ${index+1} of ${list.length}. ${esc(front.title || 'Untitled memory')}.` : `${list.length} ${filter.toLowerCase()} available.`;
     deck.innerHTML = `${content}<p class="entries-status" role="status">${status}</p>`;
     return;
@@ -322,7 +315,7 @@ async function turnPoemPage(id) {
   deck.dataset.paging = 'true';
   await birds.animate([{opacity:1},{opacity:0}],{duration:240,easing:'ease-in',fill:'forwards'}).finished;
   delete deck.dataset.paging;
-  if (!birds.isConnected || filter !== 'Poems') return;
+  if (!birds.isConnected || !['Poems','Journal'].includes(filter)) return;
   selectDeckEntry(id);
   deck.querySelector('.poems-home').animate([{opacity:0},{opacity:1}],{duration:420,easing:'ease-out'});
 }
@@ -827,10 +820,10 @@ function renderWritingChoice() {
     <div class="writing-object-scene">
       <h1>${label}</h1>
       ${uploading ? '' : `<button class="writing-object" data-action="writing-prompt"><canvas class="sense-model" data-sense-model="typewriter" aria-hidden="true"></canvas><span>Write Prompt</span></button>`}
-      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><input aria-label="Upload files" id="choice-upload" type="file" multiple></label><span>Upload</span>${files.length === 1 ? `<small class="upload-file-status" role="status">${esc(files[0].name)} uploaded</small>` : ''}</div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
-      ${uploading && files.length > 1 ? `<div class="imported-papers" role="region" tabindex="0" aria-label="Uploaded file previews. Scroll to browse.">${files.map(file=>`<article class="imported-paper">${file.src ? `<img src="${esc(file.src)}" alt="${esc(file.name)}">` : `<p>${esc(file.preview || 'Original file attached.')}</p>`}<span>${esc(file.name)}</span></article>`).join('')}</div>` : ''}
+      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><input aria-label="Upload files" id="choice-upload" type="file" multiple></label><span>Upload</span></div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
+      ${uploading && files.length ? `<div class="imported-papers" role="region" tabindex="0" aria-label="Uploaded file previews. Scroll to browse.">${files.map(file=>`<article class="imported-paper">${file.src ? `<img src="${esc(file.src)}" alt="${esc(file.name)}">` : `<p>${esc(file.preview || 'Original file attached.')}</p>`}<span>${esc(file.name)}</span></article>`).join('')}</div>` : ''}
     </div>
-    ${uploading ? `${attachmentLinks(active)}<button class="btn flow-continue" data-action="writing-open" ${files.length ? '' : 'disabled'}>Continue ${icon('arrow')}</button>` : ''}
+    ${uploading ? `<button class="btn flow-continue" data-action="writing-open" ${files.length ? '' : 'disabled'}>Continue ${icon('arrow')}</button>` : ''}
   </div>`;
   window.KaoruSenses.mount(main.querySelector('.writing-object-scene'));
   const wheel = main.querySelector('.imported-papers');
