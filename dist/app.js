@@ -65,7 +65,7 @@ try {
   state = initialState();
 }
 let active = null;
-let filter = 'Recent';
+let filter = 'All';
 let deckEntryId = '';
 let query = '';
 let detailTab = '';
@@ -202,11 +202,11 @@ function filteredEntries() {
 function deckSheet(entry, slot) {
   const title = entry ? entry.title || 'Untitled memory' : 'New page +';
   const photo = entry && photos(entry)[0];
-  const action = entry ? 'deck-select' : 'new';
+  const action = entry ? 'deck-select' : 'home-view';
   const label = entry ? 'Select ' + title : 'Start a new page';
   return `<div class="deck-sheet sheet-${slot}">
     ${photo ? `<img src="${esc(photo.src)}" alt="">` : ''}
-    <button type="button" class="deck-sheet-control" data-action="${action}" data-value="${esc(entry?.id || '')}" aria-label="${esc(label)}" title="${esc(title)}"><span>${esc(title)}</span></button>
+    <button type="button" class="deck-sheet-control" data-action="${action}" data-value="${esc(entry?.id || '2')}" aria-label="${esc(label)}" title="${esc(title)}"><span>${esc(title)}</span></button>
   </div>`;
 }
 function canComplete(entry) {
@@ -216,7 +216,7 @@ function frontSheet(entry) {
   if (!entry) {
     return `<article class="deck-front">
       <div class="front-caption"><h2>${query ? 'No matches' : 'Nothing here yet'}</h2></div>
-      <div class="front-actions">${query ? button('clear-search','Clear search','deck-action') : button('new','Create a page','deck-action','','arrow')}</div>
+      <div class="front-actions">${query ? button('clear-search','Clear search','deck-action') : button('home-view','Create a page','deck-action','2','arrow')}</div>
     </article>`;
   }
   const draft = entry.status === 'draft';
@@ -250,29 +250,102 @@ function renderEntries() {
     </div>` : ''}
     <p class="entries-status" role="status">${front ? `Entry ${index+1} of ${list.length}. ${esc(front.title || 'Untitled memory')}.` : 'No entries to show.'}</p>`;
 }
+const homeViews = ['Entries','Senses','Create New'];
+const senses = {
+  eyes:['Eyes','What caught your eye?'],
+  ears:['Ears','What could you hear?'],
+  hand:['Hand','What did it feel like?'],
+  nose:['Nose','What did it smell like?'],
+  lips:['Lips','What did it taste like?']
+};
+let homeTurn = 0;
+let homeSense = '';
+let wheelLast = -Infinity;
+let wheelDistance = 0;
+let wheelUsed = false;
+let swipeOrigin = null;
+const homeIndex = () => ((homeTurn % homeViews.length) + homeViews.length) % homeViews.length;
+
 function renderDiary() {
-  main.innerHTML = `<section class="entries-home" data-node-id="18:198" aria-label="Kaoru diary">
-    <img class="entries-dot dot-bl" src="assets/entries/dot-bottom-left.svg" width="156" height="156" alt="" data-node-id="19:273">
-    <img class="entries-dot dot-tr" src="assets/entries/dot-top-right.svg" width="89" height="89" alt="" data-node-id="19:274">
-    <img class="entries-dot dot-br" src="assets/entries/dot-bottom-right.svg" width="170" height="170" alt="" data-node-id="19:275">
-    <img class="entries-dot dot-tl" src="assets/entries/dot-top-left.svg" width="88" height="88" alt="" data-node-id="19:276">
+  homeTurn = 0;
+  homeSense = '';
+  main.innerHTML = `<section class="entries-home" aria-label="Kaoru home">
     <div class="entries-logo">
       <h1 data-node-id="18:243">Kaoru</h1>
       <p data-node-id="18:244">keep what lingers</p>
     </div>
-    <nav class="entries-filters" aria-label="Filter entries">
-      ${['All','Collages','Recent','Journal','Poems'].map(label => `<button type="button" data-action="filter" data-value="${label}" aria-pressed="${label === filter}">${label === 'All' ? 'ALL' : label}</button>`).join('')}
-    </nav>
-    <div id="entries" class="entries-deck" role="region" aria-roledescription="carousel" aria-label="Switch between diary entries" tabindex="0"></div>
+    <div class="home-orbit">
+      <div class="home-turntable">
+        <section class="home-face face-entries" data-home-face="0" data-node-id="18:198" aria-label="Entries">
+          <img class="entries-dot dot-bl" src="assets/entries/dot-bottom-left.svg" width="156" height="156" alt="" data-node-id="19:273">
+          <img class="entries-dot dot-tr" src="assets/entries/dot-top-right.svg" width="89" height="89" alt="" data-node-id="19:274">
+          <img class="entries-dot dot-br" src="assets/entries/dot-bottom-right.svg" width="170" height="170" alt="" data-node-id="19:275">
+          <img class="entries-dot dot-tl" src="assets/entries/dot-top-left.svg" width="88" height="88" alt="" data-node-id="19:276">
+          <nav class="entries-filters" aria-label="Filter entries">
+            ${['All','Collages','Recent','Journal','Poems'].map(label => `<button type="button" data-action="filter" data-value="${label}" aria-pressed="${label === filter}">${label === 'All' ? 'ALL' : label}</button>`).join('')}
+          </nav>
+          <div id="entries" class="entries-deck" role="region" aria-roledescription="carousel" aria-label="Switch between diary entries" tabindex="0"></div>
+        </section>
+        <section class="home-face face-senses" data-home-face="1" data-node-id="18:204" aria-label="Senses" inert aria-hidden="true">
+          ${Object.entries(senses).map(([id,[label]]) => `<button type="button" class="sense-tile sense-${id}" data-action="pick-sense" data-value="${id}" aria-pressed="false">${label}</button>`).join('')}
+          <button type="button" class="sense-create" data-action="home-view" data-value="2">
+            <img src="assets/entries/sense-circle.svg" width="141" height="141" alt="" data-node-id="18:225">
+            <span>Create</span>
+          </button>
+          <div class="sense-caption"><span id="sense-status" role="status">Start with a sense.</span><a href="#scents">Browse scents →</a></div>
+        </section>
+        <section class="home-face face-create" data-home-face="2" data-node-id="18:227" aria-label="Create New" inert aria-hidden="true">
+          <div class="home-create">
+            ${button('new-from-sense','Create New','home-create-button')}
+            <p id="create-instruction">Start with a journal, a poem, or an image.</p>
+          </div>
+        </section>
+      </div>
+    </div>
     <form id="entries-search" class="entries-search" role="search">
       <input id="search" type="search" placeholder="search for what you want...." value="${esc(query)}" aria-label="Search notes, poems, and scents">
       <button type="submit" aria-label="Search diary"><img src="assets/entries/search-arrow.svg" width="28" height="15" alt="" data-node-id="18:248"></button>
     </form>
-    <nav class="entries-utilities" aria-label="Diary actions">
-      <a href="#scents">Scent index</a><a href="#saved">Saved</a>${button('new','New page','link','','plus')}
-    </nav>
+    <div class="home-dock">
+      <nav class="home-navigation" aria-label="Home views">
+        ${iconButton('home-turn','Previous Home view','-1','back')}
+        ${homeViews.map((label,i) => `<button type="button" class="home-view" data-action="home-view" data-value="${i}"${i === 0 ? ' aria-current="page"' : ''}>${label}</button>`).join('')}
+        ${iconButton('home-turn','Next Home view','1','arrow')}
+      </nav>
+      <a href="#saved" class="home-saved">Saved</a>
+    </div>
+    <p id="home-announcement" class="entries-status" role="status"></p>
   </section>`;
   renderEntries();
+}
+function rotateHome(direction) {
+  const turntable = document.querySelector('.home-turntable');
+  if (!turntable) return;
+  homeTurn += direction;
+  const index = homeIndex();
+  const next = document.querySelector(`.home-navigation .home-view[data-value="${index}"]`);
+  if (document.activeElement?.closest('.home-face')) next?.focus({preventScroll:true});
+  turntable.style.setProperty('--home-angle', `${-120 * homeTurn}deg`);
+  turntable.querySelectorAll('.home-face').forEach((face,i) => {
+    face.inert = i !== index;
+    face.setAttribute('aria-hidden',String(i !== index));
+  });
+  document.querySelectorAll('.home-navigation .home-view').forEach((control,i) => {
+    if (i === index) control.setAttribute('aria-current','page');
+    else control.removeAttribute('aria-current');
+  });
+  document.querySelector('#home-announcement').textContent = homeViews[index] + ' view';
+}
+function selectHomeView(index) {
+  const distance = (index - homeIndex() + homeViews.length) % homeViews.length;
+  if (distance) rotateHome(distance === 1 ? 1 : -1);
+}
+function selectSense(key) {
+  homeSense = homeSense === key ? '' : key;
+  const prompt = senses[homeSense]?.[1];
+  document.querySelectorAll('.sense-tile').forEach(tile => tile.setAttribute('aria-pressed',String(tile.dataset.value === homeSense)));
+  document.querySelector('#sense-status').textContent = prompt || 'Start with a sense.';
+  document.querySelector('#create-instruction').textContent = prompt || 'Start with a journal, a poem, or an image.';
 }
 
 function backLink(href,label = 'Back to diary') {
@@ -366,7 +439,7 @@ function captureFields() {
 }
 function startPanel() {
   const [label,,key] = modes[active.mode];
-  const prompts = {journal:'What do you want to remember?',poem:'Write or paste your lines…',images:'Warm window light, a box on the floor, a quiet room…'};
+  const prompts = {journal:senses[active.sense]?.[1] || 'What do you want to remember?',poem:'Write or paste your lines…',images:'Warm window light, a box on the floor, a quiet room…'};
   return `<section class="panel">
     <div class="mode-grid" aria-label="How to start">${Object.entries(modes).map(([value,[title,hint]]) => `<button class="mode" type="button" data-action="mode" data-value="${value}" aria-pressed="${active.mode===value}"><strong>${title}</strong><small>${hint}</small></button>`).join('')}</div>
     ${field('title','Page title',active.title,{placeholder:'Give this memory a name',max:90})}
@@ -618,6 +691,10 @@ function carryLine(value) {
 }
 const actions = {
   new:() => newDraft(),
+  'home-view':value => selectHomeView(Number(value)),
+  'home-turn':value => rotateHome(Number(value)),
+  'pick-sense':selectSense,
+  'new-from-sense':() => newDraft(homeSense ? {sense:homeSense} : {}),
   'new-scent':scent => newDraft({scent}),
   filter:value => {
     filter = value;
@@ -739,13 +816,48 @@ document.addEventListener('change', event => {
 document.addEventListener('submit', event => {
   if (event.target.id !== 'entries-search') return;
   event.preventDefault();
+  selectHomeView(0);
   document.querySelector('#entries').focus({preventScroll:true});
 });
 document.addEventListener('keydown', event => {
-  if (!event.target.closest('#entries') || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+  if (!document.querySelector('.home-turntable') || event.defaultPrevented ||
+      event.altKey || event.metaKey || event.ctrlKey ||
+      !['ArrowLeft','ArrowRight'].includes(event.key) ||
+      event.target.closest?.('input, textarea, [contenteditable]')) return;
   event.preventDefault();
-  actions['deck-step'](event.key === 'ArrowLeft' ? '-1' : '1');
+  if (!event.repeat) rotateHome(event.key === 'ArrowLeft' ? -1 : 1);
 });
+document.addEventListener('wheel', event => {
+  if (!event.target.closest('.entries-home') || event.ctrlKey) return;
+  const horizontal = event.shiftKey && Math.abs(event.deltaX) < 1 ? event.deltaY : event.deltaX;
+  if (!horizontal || (!event.shiftKey && Math.abs(horizontal) <= Math.abs(event.deltaY))) return;
+  event.preventDefault();
+  const time = performance.now();
+  if (time - wheelLast > 160) { wheelDistance = 0; wheelUsed = false; }
+  wheelLast = time;
+  if (wheelUsed) return;
+  wheelDistance += horizontal * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 48 : 1);
+  if (Math.abs(wheelDistance) >= 30) {
+    wheelUsed = true;
+    rotateHome(Math.sign(wheelDistance));
+  }
+},{passive:false});
+document.addEventListener('touchstart', event => {
+  swipeOrigin = event.target.closest('.entries-home') &&
+    !event.target.closest('.entries-search, .home-dock') &&
+    event.touches.length === 1 ? event.touches[0] : null;
+},{passive:true});
+document.addEventListener('touchend', event => {
+  if (!swipeOrigin) return;
+  const touch = event.changedTouches[0];
+  const dx = touch.clientX - swipeOrigin.clientX;
+  const dy = touch.clientY - swipeOrigin.clientY;
+  swipeOrigin = null;
+  if (Math.abs(dx) < 46 || Math.abs(dx) < 1.4 * Math.abs(dy)) return;
+  if (event.cancelable) event.preventDefault();
+  rotateHome(dx < 0 ? 1 : -1);
+},{passive:false});
+document.addEventListener('touchcancel', () => { swipeOrigin = null; },{passive:true});
 window.addEventListener('hashchange', () => render(true));
 window.addEventListener('pagehide', () => { if (active) rememberDraft(); });
 render();
