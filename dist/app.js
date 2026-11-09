@@ -281,10 +281,10 @@ function categoryGallery(list, index) {
       </span>
     </button>`;
   }).join('');
-  const pages = list.length > size ? `<nav class="category-pages" aria-label="${filter} pages">
-    ${start > 0 ? iconButton('deck-select','Previous page',list[start-size].id,'back') : ''}
-    <span>${start+1}–${Math.min(end,list.length)} of ${list.length}</span>
-    ${end < list.length ? iconButton('deck-select','Next page',list[end].id,'arrow') : ''}
+  const pages = list.length > size ? `<nav class="category-pages${isCollage ? '' : ' poem-pages'}" aria-label="${filter} pages">
+    ${start > 0 ? iconButton(isCollage ? 'deck-select' : 'poem-page','Previous page',list[start-size].id,'back') : ''}
+    <span class="${isCollage ? '' : 'entries-status'}">${start+1}–${Math.min(end,list.length)} of ${list.length}</span>
+    ${end < list.length ? iconButton(isCollage ? 'deck-select' : 'poem-page','Next page',list[end].id,'arrow') : ''}
   </nav>` : '';
   return `<div class="${isCollage ? 'collage-home' : 'poems-home'}">${cards}</div>${pages}`;
 }
@@ -313,6 +313,18 @@ function renderEntries() {
     ${back.map((entry,i) => deckSheet(entry,i+1)).reverse().join('')}
     ${frontSheet(front)}
     <p class="entries-status" role="status">${front ? `Entry ${index+1} of ${list.length}. ${esc(front.title || 'Untitled memory')}.` : 'No entries to show.'}</p>`;
+}
+async function turnPoemPage(id) {
+  const deck = document.querySelector('#entries');
+  const birds = deck?.querySelector('.poems-home');
+  if (!birds || deck.dataset.paging) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { selectDeckEntry(id); return; }
+  deck.dataset.paging = 'true';
+  await birds.animate([{opacity:1},{opacity:0}],{duration:240,easing:'ease-in',fill:'forwards'}).finished;
+  delete deck.dataset.paging;
+  if (!birds.isConnected || filter !== 'Poems') return;
+  selectDeckEntry(id);
+  deck.querySelector('.poems-home').animate([{opacity:0},{opacity:1}],{duration:420,easing:'ease-out'});
 }
 function selectDeckEntry(id) {
   const deck = document.querySelector('#entries');
@@ -532,26 +544,45 @@ function showSenseWheel() {
   requestAnimationFrame(shapeSenseWheel);
 }
 function renderCapture(type) {
-  const selectedType = Object.hasOwn(senses,type) ? type : senseDraft?.type || 'nose';
-  const draft = senseDraft?.type === selectedType ? senseDraft : null;
+  const draft = senseDraft;
   main.innerHTML = `<div class="wrap view" data-node-id="20:291">
     ${backLink(route('sense-select',type),'Back to Sense Selection')}
     <h1 class="entries-status">Capture New Senses</h1>
     <form id="capture-sense" class="sense-capture-form">
-      <div class="sense-capture-tiles" aria-hidden="true"><span>Hand</span><span>Nose</span></div>
+      <div class="capture-models" aria-hidden="true"></div><p id="capture-detected" class="entries-status" aria-live="polite"></p>
       <p class="sense-capture-prompt">Describe your sensory experience.</p>
       <div class="sense-writing-paper">
-        <div class="field"><label for="capture-type">Sense</label>
-          <select id="capture-type" name="type">${Object.entries(senses).map(([key,[label]]) => `<option value="${key}"${key === selectedType ? ' selected' : ''}>${label}</option>`).join('')}</select>
-        </div>
         <div class="field"><label for="capture-detail">What did you notice?</label><textarea id="capture-detail" name="detail" placeholder="Describe the moment…" maxlength="220" required>${esc(draft?.detail || '')}</textarea></div>
       </div>
       <button type="submit" class="btn flow-continue">Continue ${icon('arrow')}</button>
     </form>
   </div>`;
+  updateCaptureModels();
+}
+function detectSenses(text) {
+  const cues = {
+    nose:/\b(smell\w*|scent\w*|aroma\w*|fragranc\w*|perfume|incense|lavender|orange peel|musty|petrichor)\b/gi,
+    ears:/\b(hear\w*|heard|sound\w*|music|song\w*|voice\w*|whisper\w*|loud|quiet|silence|ringing|rustl\w*|humming|echo\w*)\b/gi,
+    hand:/\b(touch\w*|felt|feel\w*|soft|rough|smooth|warm\w*|cold|cool|hot|texture\w*|skin|hands?|fuzzy|silk\w*|wet|dry|velvet\w*)\b/gi,
+    eyes:/\b(see|seeing|saw|look\w*|watch\w*|light\w*|colou?r\w*|bright|dark|glow\w*|blue|red|green|pink|yellow|shadow\w*|sunset|shimmer\w*)\b/gi,
+    lips:/\b(tast\w*|flavo[u]?r\w*|sweet|sour|bitter|salty|spicy|savou?ry|delicious|sip\w*|eat\w*|ate|tongue|honey|sugar|lemon)\b/gi
+  };
+  return Object.entries(cues).map(([type,pattern]) => [type,(text.match(pattern) || []).length]).filter(([,score]) => score).sort((a,b) => b[1]-a[1]).map(([type]) => type);
+}
+function updateCaptureModels() {
+  const input = document.querySelector('#capture-detail');
+  const container = document.querySelector('.capture-models');
+  if (!input || !container) return;
+  const types = detectSenses(input.value);
+  const key = [...types].sort().join(',');
+  if (container.dataset.detected === key) return;
+  container.dataset.detected = key;
+  container.innerHTML = types.map(type => `<div class="capture-model capture-model-${type}"><canvas class="sense-model" data-sense-model="${type}"></canvas><small>${senses[type][0]}</small></div>`).join('');
+  document.querySelector('#capture-detected').textContent = types.length ? 'Senses noticed: ' + types.map(type => senses[type][0]).join(', ') : '';
+  if (types.length) window.KaoruSenses.mount(container);
 }
 function senseArtwork(type,name = '',linked = false) {
-  const labels = [senses[type][0],name || 'Memory',linked ? 'Linked' : 'Sense'];
+  const labels = [senses[type]?.[0] || 'Memory',name || 'Memory',linked ? 'Linked' : 'Sense'];
   return `<div class="sense-artwork" tabindex="0" role="group" aria-label="Sensory sphere. Scroll sideways, drag, or use left and right arrow keys to browse its three labels.">
     <div class="sense-orbit">${labels.map((label,index) => `<div class="sense-orbit-anchor" style="--slot:${index * 120}deg"><span>${esc(label)}</span></div>`).join('')}</div>
   </div>`;
@@ -583,7 +614,7 @@ function renderReuseSenses() {
   main.innerHTML = `<div class="wrap view">
     ${backLink('#sense-select','Back to Sense Selection')}
     ${viewTitle('Return to a detail','Reuse a Sense','Choose a captured sense or a scent from your diary.')}
-    ${notes.length ? `<div class="index-grid">${notes.map(note => `<a class="index-card sense-record" href="${route('captured',note.id)}"><div><p class="eyebrow">${senses[note.type][0]}</p><h3>${esc(note.name)}</h3></div>${icon('arrow')}</a>`).join('')}</div>` : empty('No senses yet','Capture a detail to find it here.',backLink('#capture','Capture a sense'))}
+    ${notes.length ? `<div class="index-grid">${notes.map(note => `<a class="index-card sense-record" href="${route('captured',note.id)}"><div><p class="eyebrow">${senses[note.type]?.[0] || 'Memory'}</p><h3>${esc(note.name)}</h3></div>${icon('arrow')}</a>`).join('')}</div>` : empty('No senses yet','Capture a detail to find it here.',backLink('#capture','Capture a sense'))}
   </div>`;
 }
 function renderCaptured(id) {
@@ -858,13 +889,13 @@ function beginCreation(form) {
 }
 function captureSense(form) {
   const fields = new FormData(form);
-  const type = fields.get('type');
   const detail = fields.get('detail').trim();
-  if (!Object.hasOwn(senses,type) || !detail) {
+  const types = detectSenses(detail);
+  if (!detail) {
     message('Describe what you noticed.');
     return;
   }
-  senseDraft = {type,detail};
+  senseDraft = {type:types[0] || '',types,detail};
   go('name-sense');
 }
 function saveSense(form) {
@@ -872,7 +903,8 @@ function saveSense(form) {
   const name = fields.get('name').trim();
   const detail = fields.get('detail').trim();
   if (!name || !detail) { message('Add a name and a detail for this sense.'); return; }
-  const note = {id:makeId(),type:senseDraft.type,name,detail};
+  const types = detectSenses(detail);
+  const note = {id:makeId(),type:types[0] || '',types,name,detail};
   const memory = itemById(fields.get('memory'));
   if (memory?.status === 'saved') note.memoryId = memory.id;
   if (persist({...state,senseNotes:[note,...(state.senseNotes || [])]})) {
@@ -1068,6 +1100,7 @@ function carryLine(value) {
   if (line) newDraft({parentId:id,note:line.slice(0,110)});
 }
 const actions = {
+  'poem-page':turnPoemPage,
   'show-sense-wheel':showSenseWheel,
   new:() => newDraft(),
   'home-view':value => selectHomeView(Number(value)),
@@ -1177,6 +1210,7 @@ document.addEventListener('click', event => {
   else render(true);
 });
 document.addEventListener('input', event => {
+  if (event.target.id === 'capture-detail') updateCaptureModels();
   if (event.target.id === 'search') { query = event.target.value; deckEntryId = ''; renderEntries(); return; }
   const {field:key,photoCrop:cropId} = event.target.dataset;
   if (!active || (!key && !cropId)) return;
@@ -1272,6 +1306,7 @@ function turnSenseSphere(sphere,amount) {
   const angle = Number(sphere.dataset.rotation || 0) + amount;
   sphere.dataset.rotation = angle;
   sphere.style.setProperty('--turn',angle + 'deg');
+  sphere.style.setProperty('--light-x',(50 - Math.cos(angle * Math.PI / 180) * 22) + '%');
 }
 document.addEventListener('wheel',event => {
   const sphere = event.target.closest('.sense-artwork');

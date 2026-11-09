@@ -416,7 +416,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   animation:search-drift 6s ease-in-out infinite;
 }
 .entries-search.is-expanded{
-  width:clamp(224px,41cqw,565px);min-height:clamp(39px,3.7cqw,52px);opacity:1;
+  width:clamp(224px,41cqw,565px);min-height:clamp(34px,3cqw,42px);opacity:1;
   outline:1px solid var(--navy);animation-play-state:paused;
 }
 @media(hover:hover) and (pointer:fine){
@@ -575,7 +575,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
   .journal-paper{row-gap:8px}
   .journal-paper p{-webkit-line-clamp:4}
   .entries-search{min-height:34px}
-  .entries-search.is-expanded{min-height:38px}
+  .entries-search.is-expanded{min-height:34px}
   .entries-search button{min-height:34px;padding-block:5px}
   .entries-search input{padding-block:5px}
   .deck-front{padding-block:8px}
@@ -768,9 +768,43 @@ body:has(#main > .view){
 @media(prefers-reduced-motion:reduce){.sense-artwork{animation:none}.sense-orbit,.sense-orbit-anchor span{transition:none}}
 
 @media(min-width:701px){
-  .entries-deck:has(.collage-home){width:76%;height:39%;top:49%}
-  .collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){width:100%;height:100%;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:clamp(18px,2vw,36px)}
-  .collage-card:last-child:nth-child(odd){grid-column:auto;width:100%}
+  .entries-deck:has(.collage-home){width:48%;height:55%;top:49%}
+  .collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){width:100%;height:100%;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(16px,2.8dvh,28px) clamp(24px,3vw,48px)}
+  .collage-card:last-child:nth-child(odd){grid-column:1 / -1;width:calc((100% - clamp(24px,3vw,48px)) / 2);justify-self:center}
   .collage-card-art .fragment{font-size:clamp(12px,1.1cqw,17px)}
   .collage-card-art .art-chip{font-size:clamp(10px,.8cqw,12px)}
+}
+
+.capture-models{position:absolute;inset:0;pointer-events:none}
+.capture-model{position:absolute;width:clamp(60px,11vw,145px);height:clamp(85px,13vw,160px);display:grid;grid-template-rows:1fr auto;justify-items:center;animation:sense-wheel-reveal .5s ease both}
+.capture-model small{font:400 17px Lekton,monospace;color:var(--ink)}
+.capture-model .sense-model{animation-play-state:running}
+.capture-model-nose{right:0;top:8%}
+.capture-model-hand{left:0;top:55%}
+.capture-model-eyes{left:1%;top:0}
+.capture-model-ears{right:1%;top:65%}
+.capture-model-lips{left:2%;top:27%}
+.sense-capture-form:has(.capture-models) .sense-writing-paper{background:transparent;padding:0}
+.sense-capture-form:has(.capture-models) #capture-detail{min-height:clamp(180px,33dvh,340px);padding:24px;background:#f4f1eb}
+.entries-deck:has(.poem-pages) .poems-home{bottom:0;width:90%}
+.poem-pages{left:auto;right:-5%;top:50%;bottom:auto;transform:translateY(-50%)}
+.poem-pages .icon-btn{width:36px;min-height:40px}
+.poem-pages svg{width:25px;height:25px}
+.sense-artwork::before{background:radial-gradient(circle at var(--light-x,28%) 26%,#e0e8f5 0%,#a3b4d2 32%,#6c83ac 64%,#3e557c 90%,#2c4164 100%);mask-image:radial-gradient(circle,#000 58%,#000d 65%,transparent 72%);filter:blur(2px)}
+@media(max-width:650px){
+  .capture-models{position:relative;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;min-height:20px;margin-bottom:14px}
+  .capture-model{position:static;width:55px;height:75px}
+  .capture-model small{font-size:13px}
+  .poem-pages{right:0}
+  .entries-deck:has(.poem-pages) .poems-home{width:85%;right:8%}
+}
+@media(prefers-reduced-motion:reduce){.capture-model,.capture-model .sense-model{animation:none}}
+
+@property --light-x{syntax:'<percentage>';inherits:true;initial-value:28%}
+.sense-artwork{transition:--light-x .55s cubic-bezier(.22,.68,.23,1)}
+@media(prefers-reduced-motion:reduce){.sense-artwork{transition:none}}
+
+@media(min-width:701px){
+  .entries-home:has(.collage-home) .home-next{top:81%}
+  .entries-home:has(.collage-home) .entries-search{top:87%}
 }
