@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="130" height="130" viewBox="0 0 130 130" fill="none">
+  <defs>
+    <radialGradient id="pulp" cx="0" cy="0" r="1" gradientTransform="translate(65 65) rotate(90) scale(52)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e1b48e" stop-opacity=".26"/>
+      <stop offset="1" stop-color="#bd7756" stop-opacity=".47"/>
+    </radialGradient>
+  </defs>
+  <path d="M63 13c29-1 54 21 55 50 2 29-20 53-51 54-30 2-53-19-55-48C10 38 32 14 63 13Z" fill="#c58767" fill-opacity=".14" stroke="#9d6956" stroke-opacity=".63" stroke-width="1.4"/>
+  <path d="M64 21c25-1 45 18 46 43 1 25-17 45-43 46-25 2-45-16-47-42C18 42 38 22 64 21Z" fill="url(#pulp)" stroke="#aa735b" stroke-opacity=".5"/>
+  <path d="M66 65 63 24m3 41 23-34M66 65l40-10M66 65l34 23M66 65l10 42M66 65l-22 38M66 65 24 81m42-16L24 51m42 14L41 30" stroke="#f8efe3" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="66" cy="65" r="4.6" fill="#f8efe3" fill-opacity=".85"/>
+  <path d="M35 61l5 2m6-13 3 5m37 17 5 3m-24 8 1 6m10-45 3-4m10 19 5-2m-48 28-3 4m7-49 2 3" stroke="#a56850" stroke-opacity=".4" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M20 48C25 29 41 18 60 16M109 81c-5 17-20 30-39 34" stroke="#bc8062" stroke-opacity=".45" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="2 3"/>
+</svg>

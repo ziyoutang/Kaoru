@@ -246,10 +246,10 @@ function renderEntries() {
     <p class="entries-status" role="status">${front ? `Entry ${index+1} of ${list.length}. ${esc(front.title || 'Untitled memory')}.` : 'No entries to show.'}</p>`;
 }
 const homeViews = ['Entries','Senses','Create New'];
-const homeDots = `<img class="entries-dot dot-bl" src="assets/entries/dot-bottom-left.svg" width="156" height="156" alt="" data-node-id="19:273">
-          <img class="entries-dot dot-tr" src="assets/entries/dot-top-right.svg" width="89" height="89" alt="" data-node-id="19:274">
-          <img class="entries-dot dot-br" src="assets/entries/dot-bottom-right.svg" width="170" height="170" alt="" data-node-id="19:275">
-          <img class="entries-dot dot-tl" src="assets/entries/dot-top-left.svg" width="88" height="88" alt="" data-node-id="19:276">`;
+const homeMotifs = `
+  <img class="home-motif motif-taste" src="assets/entries/citrus-slice.svg" width="130" height="130" alt="">
+  <img class="home-motif motif-smell" src="assets/entries/scent-wisps.svg" width="106" height="108" alt="">
+  <img class="home-motif motif-touch" src="assets/entries/fingerprint.svg" width="146" height="145" alt="">`;
 const senses = {
   eyes:['Eyes','What caught your eye?'],
   ears:['Ears','What could you hear?'],
@@ -279,23 +279,19 @@ function renderDiary() {
     <div class="home-orbit">
       <div class="home-turntable">
         <section class="home-face face-entries" data-home-face="0" data-node-id="18:198" aria-label="Entries">
-          ${homeDots}
+          ${homeMotifs}
           <div class="home-panel">
             <div id="entries" class="entries-deck" role="region" aria-roledescription="carousel" aria-label="Switch between diary entries" tabindex="0"></div>
           </div>
         </section>
         <section class="home-face face-senses" data-home-face="1" data-node-id="18:204" aria-label="Senses" inert aria-hidden="true">
-          ${homeDots}
+          ${homeMotifs}
           <div class="home-panel">
             ${Object.entries(senses).map(([id,[label]]) => `<button type="button" class="sense-tile sense-${id}" data-action="pick-sense" data-value="${id}" aria-pressed="false" aria-label="${label}" title="Drag to rotate or use Shift and the arrow keys"><canvas class="sense-model" data-sense-model="${id}" aria-hidden="true"></canvas><span class="sense-label">${label}</span></button>`).join('')}
-            <button type="button" class="sense-create" data-action="home-view" data-value="2">
-              <img src="assets/entries/sense-circle.svg" width="141" height="141" alt="" data-node-id="18:225">
-              <span>Create</span>
-            </button>
           </div>
         </section>
         <section class="home-face face-create" data-home-face="2" data-node-id="18:227" aria-label="Create New" inert aria-hidden="true">
-          ${homeDots}
+          ${homeMotifs}
           <div class="home-panel">
             <div class="home-create">
               ${button('new-from-sense','Create New','home-create-button')}
@@ -311,7 +307,7 @@ function renderDiary() {
     </button>
     <form id="entries-search" class="entries-search" role="search">
       <input id="search" type="search" placeholder="search for what you want...." value="${esc(query)}" aria-label="Search notes, poems, and scents">
-      <button type="submit" aria-label="Search diary"><img src="assets/entries/search-arrow.svg" width="28" height="15" alt="" data-node-id="18:248"></button>
+      <button type="submit" aria-label="Search diary"><img src="assets/entries/search-arrow.svg" width="28" height="15" alt="" data-node-id="18:248"><span class="search-hover-icon">${icon('search')}</span></button>
     </form>
     <div class="home-dock">
       <nav class="home-navigation" aria-label="Home views">
@@ -826,6 +822,10 @@ document.addEventListener('change', event => {
 document.addEventListener('submit', event => {
   if (event.target.id !== 'entries-search') return;
   event.preventDefault();
+  if (!query.trim()) {
+    document.querySelector('#search').focus({preventScroll:true});
+    return;
+  }
   selectHomeView(0);
   document.querySelector('#entries').focus({preventScroll:true});
 });
