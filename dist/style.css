@@ -987,3 +987,43 @@ html[data-theme=dark] body,html[data-theme=dark] body:has(#main > .view){--ink:#
 .mixed-entry > .collage-card:last-child:nth-child(odd){width:100%;grid-column:auto}
 
 [data-theme=dark] input::placeholder,[data-theme=dark] textarea::placeholder{color:#b7bac4;opacity:1}
+
+/* Reserve space for each object's full motion, including hanging tags. */
+.poems-home:not(.mixed-home):not(.journal-leaves){gap:5%}
+.poems-home:not(.mixed-home):not(.journal-leaves) > .poem-card{width:26%}
+.mixed-home{gap:11%}
+.mixed-entry{width:22%}
+.poem-flight{--float-x:clamp(2px,.35cqw,5px);--float-y:clamp(3px,.55cqw,8px)}
+.poem-tag{max-width:clamp(60px,8.5cqw,120px)}
+@keyframes poem-flight{
+  0%,100%{transform:translate(0,0) rotate(-1deg)}
+  26%{transform:translate(var(--float-x),calc(var(--float-y) * -1)) rotate(1deg)}
+  54%{transform:translate(calc(var(--float-x) * .24),calc(var(--float-y) * -.35)) rotate(.5deg)}
+  78%{transform:translate(calc(var(--float-x) * -.75),calc(var(--float-y) * .52)) rotate(-1deg)}
+}
+@keyframes poem-swing{
+  0%,100%{transform:rotate(-5deg)}
+  29%{transform:rotate(6deg)}
+  56%{transform:rotate(2deg)}
+  82%{transform:rotate(-6deg)}
+}
+.collage-home > .collage-card{animation:collage-float 9s ease-in-out -2s infinite}
+.collage-home > .collage-card:nth-child(2){animation-duration:11s;animation-delay:-6s}
+.collage-home > .collage-card:nth-child(3){animation-duration:10s;animation-delay:-4s}
+.mixed-entry > .collage-card{animation-name:collage-float}
+@keyframes collage-float{
+  0%,100%{transform:translate(-2px,3px) rotate(-.5deg)}
+  50%{transform:translate(2px,-5px) rotate(.5deg)}
+}
+.face-entries[inert] .collage-card{animation-play-state:paused}
+.home-motif{--drift-x:calc(var(--motif-unit) * var(--motif-dx) * .45);--drift-y:calc(var(--motif-unit) * var(--motif-dy) * .45)}
+@media(min-width:701px){
+  .motif-lavender{left:22%;top:21%}
+  .motif-smell{left:79%;top:21%}
+  .motif-touch{left:85%;top:61%}
+  .motif-taste{left:24%;top:82%}
+  .motif-sight{left:77%;top:82%}
+}
+@media(max-width:650px){.mixed-home{gap:8%}.mixed-entry{width:25%}.mixed-entry .journal-leaf-paper{height:clamp(130px,24dvh,180px)}}
+@media(prefers-reduced-motion:reduce){.collage-home > .collage-card,.mixed-entry > .collage-card{animation:none}}
+.mixed-entry > .poem-card:not(.journal-leaf){--tag-x:65%;--tag-y:90%}
