@@ -243,14 +243,13 @@ function renderEntries() {
   deck.innerHTML = `
     ${back.map((entry,i) => deckSheet(entry,i+1)).reverse().join('')}
     ${frontSheet(front)}
-    ${list.length > 1 ? `<div class="deck-controls">
-      ${iconButton('deck-step','Previous entry','-1','back')}
-      <span aria-hidden="true">${String(index+1).padStart(2,'0')} / ${String(list.length).padStart(2,'0')}</span>
-      ${iconButton('deck-step','Next entry','1','arrow')}
-    </div>` : ''}
     <p class="entries-status" role="status">${front ? `Entry ${index+1} of ${list.length}. ${esc(front.title || 'Untitled memory')}.` : 'No entries to show.'}</p>`;
 }
 const homeViews = ['Entries','Senses','Create New'];
+const homeDots = `<img class="entries-dot dot-bl" src="assets/entries/dot-bottom-left.svg" width="156" height="156" alt="" data-node-id="19:273">
+          <img class="entries-dot dot-tr" src="assets/entries/dot-top-right.svg" width="89" height="89" alt="" data-node-id="19:274">
+          <img class="entries-dot dot-br" src="assets/entries/dot-bottom-right.svg" width="170" height="170" alt="" data-node-id="19:275">
+          <img class="entries-dot dot-tl" src="assets/entries/dot-top-left.svg" width="88" height="88" alt="" data-node-id="19:276">`;
 const senses = {
   eyes:['Eyes','What caught your eye?'],
   ears:['Ears','What could you hear?'],
@@ -274,34 +273,42 @@ function renderDiary() {
       <h1 data-node-id="18:243">Kaoru</h1>
       <p data-node-id="18:244">keep what lingers</p>
     </div>
+    <nav class="entries-filters" aria-label="Filter entries">
+      ${['All','Collages','Recent','Journal','Poems'].map(label => `<button type="button" data-action="filter" data-value="${label}" aria-pressed="${label === filter}">${label === 'All' ? 'ALL' : label}</button>`).join('')}
+    </nav>
     <div class="home-orbit">
       <div class="home-turntable">
         <section class="home-face face-entries" data-home-face="0" data-node-id="18:198" aria-label="Entries">
-          <img class="entries-dot dot-bl" src="assets/entries/dot-bottom-left.svg" width="156" height="156" alt="" data-node-id="19:273">
-          <img class="entries-dot dot-tr" src="assets/entries/dot-top-right.svg" width="89" height="89" alt="" data-node-id="19:274">
-          <img class="entries-dot dot-br" src="assets/entries/dot-bottom-right.svg" width="170" height="170" alt="" data-node-id="19:275">
-          <img class="entries-dot dot-tl" src="assets/entries/dot-top-left.svg" width="88" height="88" alt="" data-node-id="19:276">
-          <nav class="entries-filters" aria-label="Filter entries">
-            ${['All','Collages','Recent','Journal','Poems'].map(label => `<button type="button" data-action="filter" data-value="${label}" aria-pressed="${label === filter}">${label === 'All' ? 'ALL' : label}</button>`).join('')}
-          </nav>
-          <div id="entries" class="entries-deck" role="region" aria-roledescription="carousel" aria-label="Switch between diary entries" tabindex="0"></div>
+          ${homeDots}
+          <div class="home-panel">
+            <div id="entries" class="entries-deck" role="region" aria-roledescription="carousel" aria-label="Switch between diary entries" tabindex="0"></div>
+          </div>
         </section>
         <section class="home-face face-senses" data-home-face="1" data-node-id="18:204" aria-label="Senses" inert aria-hidden="true">
-          ${Object.entries(senses).map(([id,[label]]) => `<button type="button" class="sense-tile sense-${id}" data-action="pick-sense" data-value="${id}" aria-pressed="false">${label}</button>`).join('')}
-          <button type="button" class="sense-create" data-action="home-view" data-value="2">
-            <img src="assets/entries/sense-circle.svg" width="141" height="141" alt="" data-node-id="18:225">
-            <span>Create</span>
-          </button>
-          <div class="sense-caption"><span id="sense-status" role="status">Start with a sense.</span><a href="#scents">Browse scents →</a></div>
+          ${homeDots}
+          <div class="home-panel">
+            ${Object.entries(senses).map(([id,[label]]) => `<button type="button" class="sense-tile sense-${id}" data-action="pick-sense" data-value="${id}" aria-pressed="false">${label}</button>`).join('')}
+            <button type="button" class="sense-create" data-action="home-view" data-value="2">
+              <img src="assets/entries/sense-circle.svg" width="141" height="141" alt="" data-node-id="18:225">
+              <span>Create</span>
+            </button>
+          </div>
         </section>
         <section class="home-face face-create" data-home-face="2" data-node-id="18:227" aria-label="Create New" inert aria-hidden="true">
-          <div class="home-create">
-            ${button('new-from-sense','Create New','home-create-button')}
-            <p id="create-instruction">Start with a journal, a poem, or an image.</p>
+          ${homeDots}
+          <div class="home-panel">
+            <div class="home-create">
+              ${button('new-from-sense','Create New','home-create-button')}
+              <p id="create-instruction">Start with a journal, a poem, or an image.</p>
+            </div>
           </div>
         </section>
       </div>
     </div>
+    <div class="sense-caption" hidden><span id="sense-status" role="status">Start with a sense.</span><a href="#scents">Browse scents →</a></div>
+    <button class="home-next" type="button" data-action="home-turn" data-value="1">
+      <span id="home-next-label">Senses</span>${icon('arrow')}
+    </button>
     <form id="entries-search" class="entries-search" role="search">
       <input id="search" type="search" placeholder="search for what you want...." value="${esc(query)}" aria-label="Search notes, poems, and scents">
       <button type="submit" aria-label="Search diary"><img src="assets/entries/search-arrow.svg" width="28" height="15" alt="" data-node-id="18:248"></button>
@@ -324,7 +331,7 @@ function rotateHome(direction) {
   homeTurn += direction;
   const index = homeIndex();
   const next = document.querySelector(`.home-navigation .home-view[data-value="${index}"]`);
-  if (document.activeElement?.closest('.home-face')) next?.focus({preventScroll:true});
+  if (document.activeElement?.closest('.home-face, .entries-filters, .sense-caption')) next?.focus({preventScroll:true});
   turntable.style.setProperty('--home-angle', `${-120 * homeTurn}deg`);
   turntable.querySelectorAll('.home-face').forEach((face,i) => {
     face.inert = i !== index;
@@ -334,6 +341,9 @@ function rotateHome(direction) {
     if (i === index) control.setAttribute('aria-current','page');
     else control.removeAttribute('aria-current');
   });
+  document.querySelector('.entries-filters').hidden = index !== 0;
+  document.querySelector('.sense-caption').hidden = index !== 1;
+  document.querySelector('#home-next-label').textContent = homeViews[(index + 1) % homeViews.length];
   document.querySelector('#home-announcement').textContent = homeViews[index] + ' view';
 }
 function selectHomeView(index) {
@@ -706,15 +716,6 @@ const actions = {
     deckEntryId = id;
     renderEntries();
     document.querySelector('#entries').focus({preventScroll:true});
-  },
-  'deck-step':value => {
-    const list = filteredEntries();
-    if (list.length < 2) return;
-    const index = Math.max(0,list.findIndex(entry => entry.id === deckEntryId));
-    deckEntryId = list[(index+Number(value)+list.length)%list.length].id;
-    const keepControl = document.activeElement?.dataset.action === 'deck-step';
-    renderEntries();
-    document.querySelector(keepControl ? '[data-action="deck-step"][data-value="'+value+'"]' : '#entries').focus({preventScroll:true});
   },
   'clear-search':() => {
     query = '';
