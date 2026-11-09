@@ -1031,3 +1031,7 @@ html[data-theme=dark] body,html[data-theme=dark] body:has(#main > .view){--ink:#
 .entries-deck:has(.poem-pages) .collage-home{bottom:0}
 .entries-deck:has(.collage-home) .poem-pages{right:calc((48cqw - 52.71cqw)/2 - 5%)}
 @media(max-width:700px){.entries-deck:has(.collage-home) .poem-pages{right:0}}
+
+@media(min-width:701px){
+  .collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){height:calc(50% - clamp(12px,2dvh,18px));grid-template-rows:minmax(0,1fr)}
+}
