@@ -825,12 +825,26 @@ function renderWritingChoice() {
     <div class="writing-object-scene">
       <h1>${label}</h1>
       ${uploading ? '' : `<button class="writing-object" data-action="writing-prompt"><canvas class="sense-model" data-sense-model="typewriter" aria-hidden="true"></canvas><span>Write Prompt</span></button>`}
-      ${uploading ? `<label class="writing-object upload-object"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span class="upload-plus" aria-hidden="true">+</span><span>Upload</span><input id="choice-upload" type="file" multiple accept="${active.mode === 'images' ? 'image/*' : '.txt,.md,text/plain,text/markdown'}"><span class="field-help">${active.mode === 'images' ? 'Photos or images · up to 5' : 'Text or Markdown files'}</span></label>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
-      ${uploading ? `<div class="imported-papers" aria-label="Uploaded files">${files.length ? files.map((file,i)=>`<div class="imported-paper" style="--paper-turn:${i%2 ? 8 : -9}deg">${file.src ? `<img src="${esc(file.src)}" alt="">` : ''}<span>${esc(file.name)}</span></div>`).join('') : '<span class="empty-paper" aria-hidden="true"></span><span class="empty-paper" aria-hidden="true"></span><span class="empty-paper" aria-hidden="true"></span>'}</div>` : ''}
+      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span class="upload-plus" aria-hidden="true">+</span><input aria-label="Upload files" id="choice-upload" type="file" multiple accept="${active.mode === 'images' ? 'image/*' : '.txt,.md,text/plain,text/markdown'}"></label><span>Upload</span><span class="field-help">${active.mode === 'images' ? 'Photos or images · up to 5' : 'Text or Markdown files'}</span>${files.length === 1 ? `<small class="upload-file-status" role="status">${esc(files[0].name)} uploaded</small>` : ''}</div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
+      ${uploading && files.length > 1 ? `<div class="imported-papers" role="region" tabindex="0" aria-label="Uploaded file previews. Scroll to browse.">${files.map(file=>`<article class="imported-paper">${file.src ? `<img src="${esc(file.src)}" alt="${esc(file.name)}">` : `<p>${esc(file.preview || 'Text imported into your draft.')}</p>`}<span>${esc(file.name)}</span></article>`).join('')}</div>` : ''}
     </div>
     ${uploading ? `<button class="btn flow-continue" data-action="writing-open" ${files.length ? '' : 'disabled'}>Continue ${icon('arrow')}</button>` : ''}
   </div>`;
   window.KaoruSenses.mount(main.querySelector('.writing-object-scene'));
+  const wheel = main.querySelector('.imported-papers');
+  if (wheel) {
+    const shape = () => {
+      const bounds = wheel.getBoundingClientRect(), center = bounds.top + wheel.clientHeight / 2;
+      wheel.querySelectorAll('.imported-paper').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const distance = Math.max(-1,Math.min(1,(rect.top + rect.height/2 - center)/(wheel.clientHeight/2)));
+        card.style.transform = `translateX(${-12*distance*distance}px) rotate(${distance*8}deg) scale(${1-Math.abs(distance)*.12})`;
+        card.style.opacity = 1-Math.abs(distance)*.35;
+      });
+    };
+    wheel.addEventListener('scroll',shape,{passive:true});
+    requestAnimationFrame(shape);
+  }
 }
 async function importChoiceFiles(input) {
   if (active.mode === 'images') { await uploadFiles(input.files); return; }
@@ -839,12 +853,13 @@ async function importChoiceFiles(input) {
   if (!files.length) return;
   if (files.some(file => file.size > 64*1024)) { message('Choose text files smaller than 64 KB.'); return; }
   try {
-    const text = (await Promise.all(files.map(file=>file.text()))).map(value=>value.trim()).filter(Boolean).join('\n\n');
+    const texts = (await Promise.all(files.map(file=>file.text()))).map(value=>value.trim());
+    const text = texts.filter(Boolean).join('\n\n');
     if (active !== target) return;
     const combined = [target[key],text].filter(Boolean).join('\n\n');
     if (!text || combined.length > 2400) { message('Choose files with up to 2,400 characters combined.'); return; }
     target[key] = combined;
-    target.sourceFiles = [...(target.sourceFiles || []),...files.map(file=>({name:file.name}))];
+    target.sourceFiles = [...(target.sourceFiles || []),...files.map((file,i)=>({name:file.name,preview:texts[i].slice(0,200)}))];
     rememberDraft(); render();
   } catch { message('These files could not be read. Try plain text or Markdown.'); }
 }
