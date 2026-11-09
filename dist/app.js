@@ -65,7 +65,8 @@ try {
   state = initialState();
 }
 let active = null;
-let filter = 'All';
+let filter = 'Recent';
+let deckEntryId = '';
 let query = '';
 let detailTab = '';
 let detailId = '';
@@ -138,6 +139,7 @@ function empty(title,body,action = '') {
   return `<div class="empty"><h3>${esc(title)}</h3><p class="small">${esc(body)}</p>${action}</div>`;
 }
 function renderHeader(page) {
+  if (page === 'diary') { header.innerHTML = ''; return; }
   header.innerHTML = `<div class="wrap bar">
     <a href="#diary" class="brand" aria-label="Kaoru home. Keep what lingers.">
       <span class="brand-mark">${icon('scent')}kaoru.</span>
@@ -185,51 +187,94 @@ function entryCard(entry) {
 const grid = list => `<div class="grid">${list.map(entryCard).join('')}</div>`;
 function filteredEntries() {
   const q = normalize(query);
-  return [...state.entries].sort(byDate).filter(entry => {
-    const matches = {'All':true,'Journal notes':entry.journal,'Poems':entry.poem,'Collages':entry.status==='saved' && !entry.kind,'Drafts':entry.status==='draft'};
+  const list = state.entries.filter(entry => {
+    const matches = {
+      All:true, Recent:true, Journal:entry.journal, Poems:entry.poem,
+      Collages:entry.status==='saved' && !entry.kind
+    };
     return matches[filter] && (!q || normalize([entry.title,entry.journal,entry.poem,entry.scent,entry.smell,entry.prompt].join(' ')).includes(q));
   });
+  if (filter === 'Recent') {
+    return list.sort((a,b) => Number(b.status === 'draft') - Number(a.status === 'draft') || b.updated.localeCompare(a.updated)).slice(0,6);
+  }
+  return list.sort(byDate);
+}
+function deckSheet(entry, slot) {
+  const title = entry ? entry.title || 'Untitled memory' : 'New page +';
+  const photo = entry && photos(entry)[0];
+  const action = entry ? 'deck-select' : 'new';
+  const label = entry ? 'Select ' + title : 'Start a new page';
+  return `<div class="deck-sheet sheet-${slot}">
+    ${photo ? `<img src="${esc(photo.src)}" alt="">` : ''}
+    <button type="button" class="deck-sheet-control" data-action="${action}" data-value="${esc(entry?.id || '')}" aria-label="${esc(label)}" title="${esc(title)}"><span>${esc(title)}</span></button>
+  </div>`;
+}
+function canComplete(entry) {
+  return entry.stage === 'collage' || Boolean(entry.poem.trim() || entry.journal.trim());
+}
+function frontSheet(entry) {
+  if (!entry) {
+    return `<article class="deck-front">
+      <div class="front-caption"><h2>${query ? 'No matches' : 'Nothing here yet'}</h2></div>
+      <div class="front-actions">${query ? button('clear-search','Clear search','deck-action') : button('new','Create a page','deck-action','','arrow')}</div>
+    </article>`;
+  }
+  const draft = entry.status === 'draft';
+  const title = entry.title || 'Untitled memory';
+  const kind = draft ? 'Draft' : entry.kind === 'journal' ? 'Journal' : entry.kind === 'poem' ? 'Poem' : 'Collage';
+  return `<article class="deck-front">
+    <div class="front-caption"><p>${dateLabel(entry.created)} · ${kind}</p><h2>${esc(title)}</h2></div>
+    <div class="front-actions">
+      ${draft ? button('resume','Continue Writing','deck-action',entry.id,'arrow') : button('entry','Open entry','deck-action',entry.id,'arrow')}
+      ${draft && canComplete(entry) ? button('complete-draft','Mark as Complete','deck-action',entry.id,'arrow') : ''}
+    </div>
+    ${entry.scent ? scentChip(entry.scent,'front-scent') : ''}
+  </article>`;
 }
 function renderEntries() {
   const list = filteredEntries();
-  document.querySelector('#entries').innerHTML = list.length ? grid(list) : empty('Nothing here yet',query ? 'Try a different word or choose another filter.' : 'Pages you make will appear here.',button('new','New page','primary','','plus'));
-  document.querySelector('#results-count').textContent = query ? `${list.length} ${list.length === 1 ? 'result' : 'results'}` : '';
+  const index = Math.max(0,list.findIndex(entry => entry.id === deckEntryId));
+  const front = list[index];
+  deckEntryId = front?.id || '';
+  const next = list.slice(index+1).concat(list.slice(0,index));
+  const back = next.slice(0,3);
+  if (front && !query && back.length < 3) back.push(null);
+  const deck = document.querySelector('#entries');
+  deck.innerHTML = `
+    ${back.map((entry,i) => deckSheet(entry,i+1)).reverse().join('')}
+    ${frontSheet(front)}
+    ${list.length > 1 ? `<div class="deck-controls">
+      ${iconButton('deck-step','Previous entry','-1','back')}
+      <span aria-hidden="true">${String(index+1).padStart(2,'0')} / ${String(list.length).padStart(2,'0')}</span>
+      ${iconButton('deck-step','Next entry','1','arrow')}
+    </div>` : ''}
+    <p class="entries-status" role="status">${front ? `Entry ${index+1} of ${list.length}. ${esc(front.title || 'Untitled memory')}.` : 'No entries to show.'}</p>`;
 }
 function renderDiary() {
-  const latest = state.entries.filter(entry => entry.status === 'draft').sort(byDate)[0];
-  const scents = allScents().filter(item => item.count > 0);
-  main.innerHTML = `<div class="wrap">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-copy"><p class="kicker">A diary of what lingers</p>
-        <h1 id="hero-title">The things<br><em>we carry.</em></h1>
-        <p>Keep a moment as words, images, and the scent that brings it back.</p>
-        ${button('new','Make a page','primary','','plus')}
-      </div>
-      <div class="hero-art">
-        <div class="hero-photo"><img src="${artwork[0].src}" alt="Orange peel in a sunlit kitchen"></div>
-        <div class="tape" aria-hidden="true"></div>
-        <div class="paper-note"><small>From the diary · 21 Oct</small>I peeled an orange<br>in the quiet of a new room.</div>
-        ${scentChip('Orange peel','hero-scent')}
-      </div>
-    </section>
-    <div class="scent-ribbon"><span class="eyebrow">Scent index</span>
-      ${scents.slice(0,4).map(item => `<a class="chip" href="${route('scent',item.key)}">${icon('scent')}${esc(item.label)} · ${item.count}</a>`).join('')}
-      <a class="btn link ribbon-link" href="#scents">Browse scents ${icon('arrow')}</a>
+  main.innerHTML = `<section class="entries-home" data-node-id="18:198" aria-label="Kaoru diary">
+    <img class="entries-dot dot-bl" src="assets/entries/dot-bottom-left.svg" width="156" height="156" alt="" data-node-id="19:273">
+    <img class="entries-dot dot-tr" src="assets/entries/dot-top-right.svg" width="89" height="89" alt="" data-node-id="19:274">
+    <img class="entries-dot dot-br" src="assets/entries/dot-bottom-right.svg" width="170" height="170" alt="" data-node-id="19:275">
+    <img class="entries-dot dot-tl" src="assets/entries/dot-top-left.svg" width="88" height="88" alt="" data-node-id="19:276">
+    <div class="entries-logo">
+      <h1 data-node-id="18:243">Kaoru</h1>
+      <p data-node-id="18:244">keep what lingers</p>
     </div>
-    <div class="diary-head">
-      <div><p class="kicker">The archive</p><h2>Your diary</h2></div>
-      <label class="search">${icon('search')}<input id="search" type="search" placeholder="Search notes, poems, scents" value="${esc(query)}" aria-label="Search notes, poems, and scents"></label>
-    </div>
-    ${latest ? `<div class="resume"><span class="eyebrow">Continue writing</span><strong>${esc(latest.title || 'Untitled memory')}</strong>${button('resume',({start:'Resume draft',poem:'Edit poem',media:'Add images',collage:'Finish collage'})[latest.stage] || 'Resume draft','ghost',latest.id,'arrow')}</div>` : ''}
-    <div class="filters" aria-label="Filter entries">
-      ${['All','Journal notes','Poems','Collages','Drafts'].map(label => `<button class="chip" type="button" data-action="filter" data-value="${label}" aria-pressed="${label === filter}">${label}</button>`).join('')}
-      <span id="results-count" class="small" role="status"></span>
-    </div>
-    <div id="entries"></div>
-    <footer class="footer"><span>Kaoru · A diary of what lingers</span><span>Sample entries are included. Your additions stay in this browser.</span></footer>
-  </div>`;
+    <nav class="entries-filters" aria-label="Filter entries">
+      ${['All','Collages','Recent','Journal','Poems'].map(label => `<button type="button" data-action="filter" data-value="${label}" aria-pressed="${label === filter}">${label === 'All' ? 'ALL' : label}</button>`).join('')}
+    </nav>
+    <div id="entries" class="entries-deck" role="region" aria-roledescription="carousel" aria-label="Switch between diary entries" tabindex="0"></div>
+    <form id="entries-search" class="entries-search" role="search">
+      <input id="search" type="search" placeholder="search for what you want...." value="${esc(query)}" aria-label="Search notes, poems, and scents">
+      <button type="submit" aria-label="Search diary"><img src="assets/entries/search-arrow.svg" width="28" height="15" alt="" data-node-id="18:248"></button>
+    </form>
+    <nav class="entries-utilities" aria-label="Diary actions">
+      <a href="#scents">Scent index</a><a href="#saved">Saved</a>${button('new','New page','link','','plus')}
+    </nav>
+  </section>`;
   renderEntries();
 }
+
 function backLink(href,label = 'Back to diary') {
   return `<a class="btn link" href="${href}">${icon('back')} ${esc(label)}</a>`;
 }
@@ -576,8 +621,37 @@ const actions = {
   'new-scent':scent => newDraft({scent}),
   filter:value => {
     filter = value;
+    deckEntryId = '';
     document.querySelectorAll('[data-action="filter"]').forEach(control => control.setAttribute('aria-pressed',control.dataset.value === value));
     renderEntries();
+  },
+  'deck-select':id => {
+    deckEntryId = id;
+    renderEntries();
+    document.querySelector('#entries').focus({preventScroll:true});
+  },
+  'deck-step':value => {
+    const list = filteredEntries();
+    if (list.length < 2) return;
+    const index = Math.max(0,list.findIndex(entry => entry.id === deckEntryId));
+    deckEntryId = list[(index+Number(value)+list.length)%list.length].id;
+    const keepControl = document.activeElement?.dataset.action === 'deck-step';
+    renderEntries();
+    document.querySelector(keepControl ? '[data-action="deck-step"][data-value="'+value+'"]' : '#entries').focus({preventScroll:true});
+  },
+  'clear-search':() => {
+    query = '';
+    deckEntryId = '';
+    document.querySelector('#search').value = '';
+    renderEntries();
+    document.querySelector('#search').focus();
+  },
+  'complete-draft':id => {
+    const entry = itemById(id);
+    if (!entry || entry.status !== 'draft' || !canComplete(entry)) return;
+    active = structuredClone(entry);
+    finalize(entry.stage === 'collage' ? '' : entry.poem.trim() ? 'poem' : 'journal');
+    active = null;
   },
   resume:id => go('edit',id),
   entry:id => go('entry',id),
@@ -607,7 +681,12 @@ const actions = {
   redraft:() => { draftPoem(); rememberDraft(); render(); },
   'save-draft':() => {
     if (!rememberDraft()) return;
-    if (itemById(active.id)) message('Draft saved.');
+    if (itemById(active.id)) {
+      filter = 'Recent';
+      query = '';
+      deckEntryId = active.id;
+      message('Draft saved.');
+    }
     active = null;
     go('diary');
   },
@@ -646,7 +725,7 @@ document.addEventListener('click', event => {
   else render(true);
 });
 document.addEventListener('input', event => {
-  if (event.target.id === 'search') { query = event.target.value; renderEntries(); return; }
+  if (event.target.id === 'search') { query = event.target.value; deckEntryId = ''; renderEntries(); return; }
   const key = event.target.dataset.field;
   if (!key || !active) return;
   active[key] = event.target.type === 'checkbox' ? event.target.checked : event.target.type === 'range' ? Number(event.target.value) : event.target.value;
@@ -656,6 +735,16 @@ document.addEventListener('input', event => {
 document.addEventListener('change', event => {
   if (event.target.id === 'upload' && active) void uploadFiles(event.target.files);
   if (event.target.dataset.field && active) rememberDraft();
+});
+document.addEventListener('submit', event => {
+  if (event.target.id !== 'entries-search') return;
+  event.preventDefault();
+  document.querySelector('#entries').focus({preventScroll:true});
+});
+document.addEventListener('keydown', event => {
+  if (!event.target.closest('#entries') || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+  event.preventDefault();
+  actions['deck-step'](event.key === 'ArrowLeft' ? '-1' : '1');
 });
 window.addEventListener('hashchange', () => render(true));
 window.addEventListener('pagehide', () => { if (active) rememberDraft(); });
