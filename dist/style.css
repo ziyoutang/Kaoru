@@ -886,3 +886,45 @@ body:has(#main > .view) #main{flex:1;min-height:0;overflow:hidden}
 #main > .view > a.btn.link{align-self:flex-start}
 
 html:has(#main > .view){height:100%;overflow:hidden}
+
+/* Clay keepsakes and the write/import entry screens. */
+.sense-wheel-object{display:block;flex:none;width:78px;height:78px}
+.sense-wheel-object .sense-model{pointer-events:none;touch-action:pan-y;animation-play-state:running}
+.writing-object-scene{flex:1;min-height:0;width:min(900px,90%);margin:0 auto;display:flex;align-items:center;justify-content:center;gap:clamp(24px,5vw,80px)}
+.writing-object-scene h1{font:400 clamp(23px,2.5vw,36px)/1.2 Lekton,monospace;letter-spacing:0}
+.writing-object{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0;border:0;background:none;font:400 16px/1.3 Lekton,monospace;cursor:pointer;flex:0 1 220px;min-width:0;text-align:center}
+.writing-object .sense-model{width:clamp(120px,17vw,220px);height:clamp(140px,21vw,260px);pointer-events:none;animation-play-state:running;transition:filter .3s}
+.writing-object:hover .sense-model{filter:drop-shadow(0 9px 8px #29282148)}
+.writing-object input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.upload-object:focus-within{outline:2px solid var(--ink);outline-offset:8px}
+.upload-plus{position:absolute;top:42%;font:300 34px/1 Lekton,monospace;pointer-events:none}
+.imported-papers{display:flex;flex-direction:column;gap:18px;width:180px;max-height:45dvh;overflow:auto;padding:18px;flex-shrink:1}
+.imported-paper,.empty-paper{display:flex;align-items:center;justify-content:center;gap:8px;flex-shrink:0;min-height:60px;background:#f1eee8;border-radius:6px;padding:12px;transform:rotate(var(--paper-turn,-9deg));font:14px/1.3 Lekton,monospace;overflow-wrap:anywhere}
+.imported-paper img{width:45px;height:45px;object-fit:cover}
+.empty-paper:nth-child(2){transform:none}.empty-paper:nth-child(3){transform:rotate(12deg)}
+.writing-choice-view > .flow-continue{align-self:center;margin:0 auto 32px}
+.create-choice-view #create-flow{justify-content:flex-start;padding-top:clamp(12px,3dvh,28px);width:88%;margin-inline:auto}
+.create-choice-view .flow-choices{margin-top:0}
+.sense-capture-prompt #capture-hint{font-size:11px;line-height:1.5}
+.view > .sense-capture-form{padding-bottom:clamp(24px,5dvh,48px)}
+.sense-capture-form .sense-writing-paper{width:62%;max-width:780px}
+.sense-result-view .sense-artwork{flex:0 1 30dvh;height:30dvh;min-height:120px;margin:18px auto 0}
+.sense-result-view .captured-sense{margin:16px auto 0;flex:0 1 auto}
+.sense-result-view .flow-continue{margin:18px auto 36px}
+@media(max-width:650px){
+  .writing-object-scene{width:100%;gap:18px;flex-wrap:wrap;align-content:center}
+  .writing-object-scene h1{flex-basis:100%;text-align:center}
+  .writing-object{flex-basis:130px;font-size:14px}
+  .writing-object .sense-model{width:125px;height:155px}
+  .imported-papers{width:145px;max-height:28dvh}
+  .create-choice-view #create-flow{width:94%}
+  .sense-capture-form .sense-writing-paper{width:88%}
+  .sense-capture-prompt #capture-hint{max-width:85%;margin-inline:auto}
+  .sense-wheel-object{width:66px;height:66px}
+}
+@media(prefers-reduced-motion:reduce){.writing-object .sense-model,.sense-wheel-object .sense-model{animation:none}}
+.collage-card-art .scene-piece{scale:.88}
+.collage-card-art .scene-piece:is(:hover,:focus-within,.is-selected){scale:.93}
+@media(min-width:701px){.collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){gap:clamp(24px,4dvh,36px) clamp(32px,4vw,60px)}}
+.sense-capture-prompt{color:#283758}
+.sense-capture-prompt #capture-hint{color:var(--sub)}

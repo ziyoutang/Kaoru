@@ -501,6 +501,16 @@ function renderCreate(reference) {
     </form>
   </div>`;
 }
+function memoryObject(note) {
+  const text = `${note.name} ${note.detail}`.toLowerCase();
+  if (/orange|citrus|lemon|peel|grapefruit/.test(text)) return 'citrus';
+  if (/rain|pavement|stone|wet|petrichor/.test(text)) return 'pavement';
+  if (/flower|lavender|rose|jasmine|blossom/.test(text)) return 'flower';
+  if (/linen|fabric|cloth|silk|soft|cotton/.test(text)) return 'fabric';
+  if (/leaf|forest|wood|cedar|grass|tea/.test(text)) return 'leaf';
+  if (/sweet|sugar|honey|candy|chocolate/.test(text)) return 'sweet';
+  return {hand:'fabric',lips:'sweet',eyes:'leaf',ears:'wisp',nose:'wisp'}[note.type] || 'wisp';
+}
 function renderSenseSelect(type) {
   main.innerHTML = `<div class="wrap view choice-view" data-node-id="26:470">
     ${backLink(route('create',type),'Back to Create New')}
@@ -511,7 +521,7 @@ function renderSenseSelect(type) {
       <section id="saved-sense-wheel" class="sense-wheel-panel" hidden aria-label="Saved senses">
         <p>Scroll to browse your senses</p>
         <div class="sense-wheel" tabindex="0" aria-label="Browse saved senses">
-          ${senseRecords().length ? senseRecords().map(note => `<a class="sense-wheel-item" href="${route('captured',note.id)}"><span class="sense-wheel-circle">${icon(note.type === 'nose' ? 'scent' : 'arrow')}</span><span>${esc(note.name)}</span></a>`).join('') : '<p class="sense-wheel-empty">No saved senses yet. Capture a new sense to start your collection.</p>'}
+          ${senseRecords().length ? senseRecords().map(note => `<a class="sense-wheel-item" href="${route('captured',note.id)}"><span class="sense-wheel-object" aria-hidden="true"><canvas class="sense-model" data-sense-model="${memoryObject(note)}"></canvas></span><span>${esc(note.name)}</span></a>`).join('') : '<p class="sense-wheel-empty">No saved senses yet. Capture a new sense to start your collection.</p>'}
         </div>
       </section>
     </div>
@@ -536,6 +546,7 @@ function showSenseWheel() {
   document.querySelector('[data-action="show-sense-wheel"]').setAttribute('aria-expanded','true');
   const wheel = panel.querySelector('.sense-wheel');
   wheel.addEventListener('scroll',shapeSenseWheel,{passive:true});
+  window.KaoruSenses.mount(panel);
   requestAnimationFrame(shapeSenseWheel);
 }
 function renderCapture(type) {
@@ -805,6 +816,39 @@ function collagePanel() {
     </section>
   </div>`;
 }
+function renderWritingChoice() {
+  const uploading = active.stage === 'import';
+  const label = active.mode === 'images' ? 'Collages' : active.mode === 'poem' ? 'Poem' : 'Journal';
+  const files = active.mode === 'images' ? active.uploads : (active.sourceFiles || []);
+  main.innerHTML = `<div class="wrap view writing-choice-view">
+    ${uploading ? button('writing-choice','Back to choices','link','','back') : backLink('#create','Back to Create New')}
+    <div class="writing-object-scene">
+      <h1>${label}</h1>
+      ${uploading ? '' : `<button class="writing-object" data-action="writing-prompt"><canvas class="sense-model" data-sense-model="typewriter" aria-hidden="true"></canvas><span>Write Prompt</span></button>`}
+      ${uploading ? `<label class="writing-object upload-object"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span class="upload-plus" aria-hidden="true">+</span><span>Upload</span><input id="choice-upload" type="file" multiple accept="${active.mode === 'images' ? 'image/*' : '.txt,.md,text/plain,text/markdown'}"><span class="field-help">${active.mode === 'images' ? 'Photos or images · up to 5' : 'Text or Markdown files'}</span></label>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
+      ${uploading ? `<div class="imported-papers" aria-label="Uploaded files">${files.length ? files.map((file,i)=>`<div class="imported-paper" style="--paper-turn:${i%2 ? 8 : -9}deg">${file.src ? `<img src="${esc(file.src)}" alt="">` : ''}<span>${esc(file.name)}</span></div>`).join('') : '<span class="empty-paper" aria-hidden="true"></span><span class="empty-paper" aria-hidden="true"></span><span class="empty-paper" aria-hidden="true"></span>'}</div>` : ''}
+    </div>
+    ${uploading ? `<button class="btn flow-continue" data-action="writing-open" ${files.length ? '' : 'disabled'}>Continue ${icon('arrow')}</button>` : ''}
+  </div>`;
+  window.KaoruSenses.mount(main.querySelector('.writing-object-scene'));
+}
+async function importChoiceFiles(input) {
+  if (active.mode === 'images') { await uploadFiles(input.files); return; }
+  const target = active, key = modes[target.mode][2];
+  const files = [...input.files];
+  if (!files.length) return;
+  if (files.some(file => file.size > 64*1024)) { message('Choose text files smaller than 64 KB.'); return; }
+  try {
+    const text = (await Promise.all(files.map(file=>file.text()))).map(value=>value.trim()).filter(Boolean).join('\n\n');
+    if (active !== target) return;
+    const combined = [target[key],text].filter(Boolean).join('\n\n');
+    if (!text || combined.length > 2400) { message('Choose files with up to 2,400 characters combined.'); return; }
+    target[key] = combined;
+    target.sourceFiles = [...(target.sourceFiles || []),...files.map(file=>({name:file.name}))];
+    rememberDraft(); render();
+  } catch { message('These files could not be read. Try plain text or Markdown.'); }
+}
+
 function renderWizard(id) {
   if (!active || active.id !== id) {
     const draft = itemById(id);
@@ -814,6 +858,7 @@ function renderWizard(id) {
     }
     active = structuredClone(draft);
   }
+  if (active.stage === 'choose' || active.stage === 'import') { renderWritingChoice(); return; }
   const config = {
     start:active.mode === 'journal' ? ['Journal','Write a memory or import a text file.',startPanel]
       : active.mode === 'poem' ? ['Poem','Write your lines or bring in a poem of your own.',startPanel]
@@ -873,7 +918,7 @@ function beginCreation(form) {
     go('sense-select',sense);
     return;
   }
-  const values = {mode,sense};
+  const values = {mode,sense,stage:'choose'};
   if (note?.type === 'nose') {
     values.scent = note.name;
     values.smell = note.detail;
@@ -882,7 +927,6 @@ function beginCreation(form) {
   }
   if (note?.memoryId) values.parentId = note.memoryId;
   if (mode === 'images') {
-    values.stage = 'media';
     values.skippedPoem = true;
   }
   newDraft(values);
@@ -1100,6 +1144,10 @@ function carryLine(value) {
   if (line) newDraft({parentId:id,note:line.slice(0,110)});
 }
 const actions = {
+  'writing-choice':() => { active.stage='choose'; render(); },
+  'writing-upload':() => { active.stage='import'; render(); },
+  'writing-prompt':() => { active.stage='start'; render(); },
+  'writing-open':() => { active.stage=active.mode === 'images' ? 'media' : 'start'; rememberDraft(); render(); },
   'poem-page':turnPoemPage,
   'show-sense-wheel':showSenseWheel,
   new:() => newDraft(),
@@ -1194,6 +1242,7 @@ const actions = {
   'save-scene':() => finalize()
 };
 document.addEventListener('click', event => {
+  if (event.target.matches('#create-flow input[name="start"]')) { beginCreation(event.target.form); return; }
   const trigger = event.target.closest('.scene-piece-trigger');
   if (trigger) { selectScenePiece(trigger.parentElement); return; }
   const edit = event.target.closest('.scene-piece-edit');
@@ -1228,10 +1277,7 @@ document.addEventListener('input', event => {
   if (preview) preview.innerHTML = scene(active,true);
 });
 document.addEventListener('change', event => {
-  if (event.target.matches('#create-flow input[name="start"][value="senses"]')) {
-    beginCreation(event.target.form);
-    return;
-  }
+  if (event.target.id === 'choice-upload' && active) void importChoiceFiles(event.target);
   if (event.target.id === 'upload' && active) void uploadFiles(event.target.files);
   if (event.target.id === 'import-writing') void importWriting(event.target);
   if (active && (event.target.dataset.field || event.target.dataset.photoCrop)) rememberDraft();

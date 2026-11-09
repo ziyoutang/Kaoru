@@ -112,6 +112,69 @@ window.KaoruSenses = (() => {
     return [new Float32Array(vertices),new Uint16Array(indices)];
   }
 
+  // Closed clay objects share the same lighting and surface grain as the senses.
+  function objectMesh(key) {
+    const vertices=[], indices=[];
+    const surface=(fn,nu=48,nv=20) => {
+      const base=vertices.length/6;
+      for(let j=0;j<=nv;j++) for(let i=0;i<=nu;i++) {
+        const u=i/nu,v=j/nv,p=fn(u,v),a=fn(u+.0001,v),b=fn(u,v+.0001);
+        const x=a.map((n,k)=>n-p[k]),y=b.map((n,k)=>n-p[k]);
+        const n=[x[1]*y[2]-x[2]*y[1],x[2]*y[0]-x[0]*y[2],x[0]*y[1]-x[1]*y[0]];
+        const length=Math.hypot(...n)||1;
+        vertices.push(...p,...n.map(q=>q/length));
+      }
+      for(let j=0;j<nv;j++) for(let i=0;i<nu;i++) {
+        const a=base+j*(nu+1)+i,b=a+1,c=a+nu+1;
+        indices.push(a,b,c,b,c+1,c);
+      }
+    };
+    const pebble=(cx,cy,cz,rx,ry,rz,power=1) => surface((u,v)=>{
+      const a=u*Math.PI*2,b=v*Math.PI;
+      const soft=n=>Math.sign(n)*Math.abs(n)**power;
+      return [cx+rx*soft(Math.sin(b)*Math.cos(a)),cy+ry*soft(Math.cos(b)),cz+rz*soft(Math.sin(b)*Math.sin(a))];
+    },32,16);
+    const tube=(path,radius) => surface((u,v)=>{
+      const p=path(u),q=path(u+.0001),t=q.map((n,i)=>n-p[i]),l=Math.hypot(...t)||1;
+      const tangent=t.map(n=>n/l),a=[tangent[2],0,-tangent[0]],al=Math.hypot(...a)||1;
+      const n=a.map(x=>x/al),b=[tangent[1]*n[2],tangent[2]*n[0]-tangent[0]*n[2],-tangent[1]*n[0]];
+      return p.map((x,i)=>x+radius*(Math.cos(v*Math.PI*2)*n[i]+Math.sin(v*Math.PI*2)*b[i]));
+    },64,12);
+    if(key==='citrus') {
+      surface((u,v)=>{const a=u*Math.PI*3.7,r=.55+.11*Math.sin(u*Math.PI);return [r*Math.cos(a),-.72+1.44*u+.13*Math.cos(v*2*Math.PI),r*Math.sin(a)+.045*Math.sin(v*2*Math.PI)];},72,12);
+    } else if(key==='pavement') {
+      pebble(0,-.25,0,.85,.22,.65,.45);
+      for(const [x,y,z,r] of [[-.35,.22,.12,.18],[.35,.38,-.12,.14],[.02,.65,.05,.11]]) pebble(x,y,z,r,r*1.45,r);
+    } else if(key==='flower') {
+      tube(u=>[.08*Math.sin(u*4),-.85+1.5*u,0],.055);
+      for(let i=0;i<6;i++) {const a=i*Math.PI/3;pebble(Math.cos(a)*.3,.45+Math.sin(a)*.3,.03,.22,.25,.10);}
+      pebble(0,.45,.13,.16,.16,.12);
+      pebble(-.25,-.25,0,.27,.11,.08);
+    } else if(key==='fabric') {
+      surface((u,v)=>{const a=v*2*Math.PI;return [(u-.5)*1.7,Math.cos(a)*.58,Math.sin(u*10+Math.cos(a)*2)*.16+.04*Math.sin(a)];});
+    } else if(key==='sweet') {
+      pebble(0,0,0,.62,.58,.55,.4);
+    } else if(key==='leaf') {
+      surface((u,v)=>{const a=v*2*Math.PI,w=Math.sin(u*Math.PI)*.46;return [w*Math.cos(a),u*1.7-.85,.15*Math.sin(u*4)+.06*Math.sin(a)*Math.sin(u*Math.PI)];});
+      tube(u=>[0,u*1.7-.85,.15*Math.sin(u*4)+.055],.025);
+    } else if(key==='typewriter') {
+      pebble(0,-.45,0,.88,.24,.55,.25);
+      pebble(0,-.08,-.22,.78,.30,.26,.3);
+      pebble(0,.20,-.13,.88,.085,.10,.3);
+      pebble(0,.61,-.25,.56,.43,.035,.2);
+      for(let j=0;j<4;j++) for(let i=0;i<10;i++) pebble((i-4.5)*.145,-.28-j*.10,.57,.052,.042,.045);
+      pebble(0,-.65,.56,.40,.025,.045,.3);
+    } else if(key==='folder') {
+      pebble(0,0,0,.88,.62,.14,.2);
+      pebble(-.46,.62,-.04,.32,.12,.10,.25);
+      surface((u,v)=>{const a=v*2*Math.PI,x=(u-.5)*1.65;return [x,.48-(.70*(1-Math.abs(x/.83)))*(.5+.5*Math.cos(a)),.17+.045*Math.sin(a)];});
+      for(const side of [-1,1]) tube(u=>{const a=u*Math.PI*4,r=.14*(1-u);return [side*.62+Math.cos(a)*r,-.40+Math.sin(a)*r,.17];},.018);
+    } else {
+      tube(u=>[.42*Math.sin(u*7),u*1.7-.85,.23*Math.cos(u*7)],.105);
+    }
+    return [new Float32Array(vertices),new Uint16Array(indices)];
+  }
+
   function createRenderer() {
     const surface=document.createElement('canvas');
     const gl=surface.getContext('webgl',{alpha:true,antialias:true,preserveDrawingBuffer:true});
@@ -126,7 +189,7 @@ window.KaoruSenses = (() => {
     gl.attachShader(program,shader(gl.VERTEX_SHADER,`
       attribute vec3 position, normal;
       uniform vec2 angles, scale;
-      varying vec3 clayPoint, clayNormal;
+      varying vec3 clayPoint, clayNormal, localNormal;
       vec3 rotate(vec3 p) {
         float cy=cos(angles.x), sy=sin(angles.x), cx=cos(angles.y), sx=sin(angles.y);
         vec3 q=vec3(p.x*cy+p.z*sy,p.y,-p.x*sy+p.z*cy);
@@ -135,13 +198,16 @@ window.KaoruSenses = (() => {
       void main() {
         vec3 p=rotate(position);
         clayPoint=position;
+        localNormal=normal;
         clayNormal=normalize(rotate(normal));
         gl_Position=vec4(p.xy*scale,-p.z*.42,1.0-p.z*.18);
       }
     `));
     gl.attachShader(program,shader(gl.FRAGMENT_SHADER,`
       precision mediump float;
-      varying vec3 clayPoint, clayNormal;
+      uniform vec3 pigment;
+      uniform float material;
+      varying vec3 clayPoint, clayNormal, localNormal;
       float grain(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*4375.8545);}
       void main(){
         vec2 p=clayPoint.xy+vec2(clayPoint.z*.37,clayPoint.z*.69);
@@ -153,7 +219,30 @@ window.KaoruSenses = (() => {
         float bounce=max(0.0,dot(n,normalize(vec3(.7,-.4,.3))));
         float matte=.43+.55*light+.10*bounce;
         float surface=(fleck-.5)*.066+striation*.014-pit*.062;
-        gl_FragColor=vec4(vec3(.67,.655,.615)*matte+surface,1.0);
+        vec3 color=pigment;
+        float sheen=0.0;
+        if(material==1.0){
+          float inside=step(dot(normalize(localNormal),normalize(vec3(clayPoint.x,0.,clayPoint.z))),-.12);
+          float pores=grain(floor(clayPoint.xy*105.0+clayPoint.z*33.0));
+          color=mix(pigment,vec3(.94,.84,.62),inside);
+          color+=vec3(.07,.028,-.01)*sin(clayPoint.y*15.0+clayPoint.x*8.0);
+          surface=(pores-.5)*.09-step(.91,pores)*.06;
+        } else if(material==2.0){
+          if(clayPoint.y>0.0){
+            color=vec3(.48,.65,.73);
+            sheen=pow(max(0.,dot(n,normalize(vec3(-.35,.55,1.)))),28.)*.44;
+            surface*=.12;
+          } else {
+            float aggregate=grain(floor(p*45.0));
+            color+=vec3((aggregate-.5)*.18);
+            float crack=1.-smoothstep(.015,.04,abs(sin(p.x*17.+sin(p.y*8.)*2.)));
+            surface-=crack*.065;
+            sheen=pow(max(0.,dot(n,normalize(vec3(-.35,.55,1.)))),18.)*.13;
+          }
+        } else if(material==3.0){
+          surface+=sin(p.x*220.)*sin(p.y*220.)*.025;
+        }
+        gl_FragColor=vec4(color*matte+surface+sheen,1.0);
       }
     `));
     gl.linkProgram(program);
@@ -164,10 +253,12 @@ window.KaoruSenses = (() => {
     gl.clearColor(0,0,0,0);
     const position=gl.getAttribLocation(program,'position'),normal=gl.getAttribLocation(program,'normal');
     const angles=gl.getUniformLocation(program,'angles'),scale=gl.getUniformLocation(program,'scale');
+    const pigment=gl.getUniformLocation(program,'pigment'),material=gl.getUniformLocation(program,'material');
+    const finishes={citrus:[[.95,.45,.095],1],pavement:[[.32,.35,.37],2],flower:[[.66,.54,.72],0],leaf:[[.43,.56,.36],0],fabric:[[.80,.75,.64],3],sweet:[[.76,.51,.30],0],wisp:[[.63,.69,.71],0]};
     const meshes=new Map();
     return (key, width, height, yaw, pitch) => {
       if (!meshes.has(key)) {
-        const [points,indices]=makeMesh(forms[key]);
+        const [points,indices]=forms[key] ? makeMesh(forms[key]) : objectMesh(key);
         const data=gl.createBuffer(), index=gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER,data);
         gl.bufferData(gl.ARRAY_BUFFER,points,gl.STATIC_DRAW);
@@ -186,6 +277,8 @@ window.KaoruSenses = (() => {
       gl.enableVertexAttribArray(position);gl.enableVertexAttribArray(normal);
       gl.vertexAttribPointer(position,3,gl.FLOAT,false,24,0);
       gl.vertexAttribPointer(normal,3,gl.FLOAT,false,24,12);
+      const [color,kind]=finishes[key] || [[.67,.655,.615],0];
+      gl.uniform3fv(pigment,color);gl.uniform1f(material,kind);
       gl.uniform2f(angles,yaw,pitch);
       gl.uniform2f(scale,Math.min(.78,1.02/ratio),Math.min(1.02,.78*ratio));
       gl.drawElements(gl.TRIANGLES,mesh.count,gl.UNSIGNED_SHORT,0);
@@ -233,7 +326,7 @@ window.KaoruSenses = (() => {
         if (drag?.canvas===canvas || tile.matches(':focus-visible') || (finePointer.matches && tile.matches(':hover'))) continue;
         const pose=poses.get(canvas);
         const back=Math.max(0,-Math.cos(pose.yaw));
-        pose.yaw+=elapsed*turns[canvas.dataset.senseModel].rate*(1+back*1.5);
+        pose.yaw+=elapsed*(turns[canvas.dataset.senseModel]?.rate || .18)*(1+back*1.5);
         draw(canvas);
       }
     }
@@ -254,7 +347,7 @@ window.KaoruSenses = (() => {
     activeFace=face;
     activeCanvases=[...face.querySelectorAll('.sense-model')];
     for (const canvas of activeCanvases) {
-      if (!poses.has(canvas)) poses.set(canvas,{yaw:turns[canvas.dataset.senseModel].yaw,pitch:-.07});
+      if (!poses.has(canvas)) poses.set(canvas,{yaw:(turns[canvas.dataset.senseModel]?.yaw || -.3),pitch:-.07});
       draw(canvas);
     }
     syncAnimation();
