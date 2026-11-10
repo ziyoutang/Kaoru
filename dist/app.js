@@ -828,6 +828,7 @@ function collagePanel() {
     </section>
   </div>`;
 }
+const journalFileExtensions = ['txt','md','markdown','doc','docx','rtf','odt'];
 function renderWritingChoice() {
   const uploading = active.stage === 'import';
   const label = active.mode === 'images' ? 'Collages' : active.mode === 'poem' ? 'Poem' : 'Journal';
@@ -837,7 +838,7 @@ function renderWritingChoice() {
     <div class="writing-object-scene">
       <h1>${label}</h1>
       ${uploading ? '' : `<button class="writing-object" data-action="writing-prompt"><canvas class="sense-model" data-sense-model="typewriter" aria-hidden="true"></canvas><span>Write Prompt</span></button>`}
-      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><input aria-label="Upload files" id="choice-upload" type="file" multiple></label><span>Upload</span></div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
+      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><input aria-label="Upload files" id="choice-upload" type="file" ${active.mode === 'journal' ? `accept="${journalFileExtensions.map(ext=>`.${ext}`).join(',')}"` : ''} multiple></label><span>Upload</span></div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
       ${uploading && files.length ? `<div class="imported-papers" role="region" tabindex="0" aria-label="Uploaded file previews. Scroll to browse.">${files.map(file=>`<article class="imported-paper">${file.src ? `<img src="${esc(file.src)}" alt="${esc(file.name)}">` : `<p>${esc(file.preview || 'Original file attached.')}</p>`}<span>${esc(file.name)}</span></article>`).join('')}</div>` : ''}
     </div>
     ${uploading ? `<button class="btn flow-continue" data-action="writing-open" ${files.length ? '' : 'disabled'}>Continue ${icon('arrow')}</button>` : ''}
@@ -899,12 +900,17 @@ function attachmentLinks(entry) {
 async function importChoiceFiles(input) {
   const target = active, key = modes[target.mode][2], files = [...input.files];
   if (!files.length) return;
+  if (target.mode === 'journal' && files.some(file => !journalFileExtensions.some(ext => file.name.toLowerCase().endswith(`.${ext}`)))) {
+    message('Please upload text documents: TXT, Markdown, DOC, DOCX, RTF, or ODT.');
+    input.value = '';
+    return;
+  }
   input.disabled = true;
   try {
     const items = await Promise.all(files.map(async file => {
       const id=makeId(), note={id,name:file.name,type:file.type,size:file.size};
       let text='', image;
-      if (file.type.startsWith('text/') || /\.(txt|md|csv|json|log)$/i.test(file.name)) {
+      if (file.type.startsWith('text/') || /\.(txt|md|markdown|csv|json|log)$/i.test(file.name)) {
         text = (await file.slice(0,65536).text()).trim();
         note.preview = text.slice(0,200);
       } else if (file.type.startsWith('image/')) {
