@@ -943,6 +943,61 @@ async function importChoiceFiles(input) {
   finally { input.disabled=false; input.value=''; }
 }
 
+function renderJournalFlow() {
+  const stage = active.stage;
+  const editing = stage === 'poem-edit';
+  const poem = stage === 'poem' || editing;
+  const date = active.journalDate || active.created.slice(0,10);
+  main.innerHTML = `<div class="wrap view journal-flow-view">
+    ${button('journal-back','Back','link','','back')}
+    <div class="journal-flow-scene">
+      <h1>${poem ? 'Poem' : 'Journal'}</h1>
+      ${stage === 'start' ? `<section class="journal-writing-sheet" aria-label="Write journal">
+        <input aria-label="Journal title" data-field="title" maxlength="90" placeholder="Journal Title" value="${esc(active.title)}">
+        <div class="journal-metadata">
+          <label>Date<input aria-label="Date" type="date" data-field="journalDate" value="${esc(date)}"></label>
+          <label>Weather<input aria-label="Weather" data-field="weather" maxlength="40" placeholder="Weather" value="${esc(active.weather)}"></label>
+          <label>Feeling<input aria-label="Feeling" data-field="feeling" maxlength="40" placeholder="Feeling" value="${esc(active.feeling)}"></label>
+        </div>
+        <textarea id="journal" aria-label="Journal content" data-field="journal" maxlength="2400" placeholder="Journal content…">${esc(active.journal)}</textarea>
+      </section>` : stage === 'journal-choice' ? `<div class="journal-paths" aria-label="Choose what to create">
+        <button class="journal-path is-selected" data-action="journal-path" data-value="poem" aria-pressed="true">Generate<br>poem?</button>
+        <button class="journal-path" data-action="journal-path" data-value="images" aria-pressed="false">Skip to<br>image</button>
+      </div>` : `<div class="journal-poem-preview">${editing ? `<textarea aria-label="Edit poem" data-field="poem" maxlength="2000">${esc(active.poem)}</textarea>` : `<p class="poem-reveal" aria-label="${esc(active.poem)}"></p>`}</div>`}
+      <div class="journal-flow-next">
+        ${poem ? button(editing ? 'journal-finish-edit' : 'journal-edit-poem',editing ? 'Done' : 'edit?','link') : ''}
+        ${iconButton(stage === 'start' ? 'journal-next' : stage === 'journal-choice' ? 'journal-generate' : 'approve-poem','Continue','','arrow')}
+      </div>
+    </div>
+    <div class="journal-flow-footer">${button('save-draft','Save & exit','link')}${poem ? button('save-poem','Save poem','link') : button('save-note','Save journal','link')}</div>
+  </div>`;
+  if (stage === 'poem') {
+    const output = main.querySelector('.poem-reveal'), text = active.poem;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { output.textContent = text; return; }
+    const start = performance.now();
+    const reveal = time => {
+      if (!output.isConnected) return;
+      const count = Math.floor((time-start)/24);
+      output.textContent = text.slice(0,count);
+      if (count < text.length) requestAnimationFrame(reveal);
+    };
+    requestAnimationFrame(reveal);
+  }
+}
+async function showGenerating(kind) {
+  const target = active, destination = location.hash;
+  const words = [target.scent,...(target.journal+' '+target.prompt+' '+target.poem).match(/[a-zA-Z]{4,}/g) || []]
+    .filter(word => word && !/^(this|that|with|from|have|were|there|then|when)$/i.test(word));
+  const keywords = [...new Set(words.map(word=>word.toLowerCase()))].slice(0,3);
+  main.innerHTML = `<div class="wrap view generating-view" aria-busy="true">
+    <div class="generation-orb" aria-hidden="true">${keywords.map((word,i)=>`<span class="generation-keyword keyword-${i}">${esc(word)}</span>`).join('')}</div>
+    <h1 role="status">Generating…</h1><p class="demo-note">${kind === 'poem' ? 'Creating a sample poem' : 'Preparing sample images'}</p>
+  </div>`;
+  await new Promise(resolve=>setTimeout(resolve,1600));
+  if (active !== target || location.hash !== destination) return;
+  if (kind === 'poem') { draftPoem(); active.skippedPoem=false; advance('poem'); }
+  else { imageIdeas(); advance('media'); }
+}
 function renderWizard(id) {
   if (!active || active.id !== id) {
     const draft = itemById(id);
@@ -953,6 +1008,7 @@ function renderWizard(id) {
     active = structuredClone(draft);
   }
   if (active.stage === 'choose' || active.stage === 'import') { renderWritingChoice(); return; }
+  if (active.mode === 'journal' && ['start','journal-choice','poem','poem-edit'].includes(active.stage)) { renderJournalFlow(); return; }
   const config = {
     start:active.mode === 'journal' ? ['Journal','Write a memory or import a text file.',startPanel]
       : active.mode === 'poem' ? ['Poem','Write your lines or bring in a poem of your own.',startPanel]
@@ -1297,6 +1353,21 @@ const actions = {
     document.querySelector('#scent').value = value;
     rememberDraft();
   },
+  'journal-back':() => { advance(({start:'choose','journal-choice':'start',poem:'journal-choice','poem-edit':'poem'})[active.stage] || 'start'); },
+  'journal-next':() => { if (requireText('journal','Write a few words first.')) advance('journal-choice'); },
+  'journal-path':value => {
+    main.querySelectorAll('.journal-path').forEach(item => {
+      const selected = item.dataset.value === value;
+      item.classList.toggle('is-selected',selected);
+      item.setAttribute('aria-pressed',String(selected));
+    });
+  },
+  'journal-generate':() => {
+    if (main.querySelector('.journal-path.is-selected')?.dataset.value === 'images') { active.skippedPoem=true; advance('media'); }
+    else void showGenerating('poem');
+  },
+  'journal-edit-poem':() => advance('poem-edit'),
+  'journal-finish-edit':() => advance('poem'),
   'next-start':() => {
     if (active.mode === 'journal') {
       if (!requireText('journal','Write or paste a few words first.')) return;
@@ -1324,7 +1395,7 @@ const actions = {
     const previous = {poem:'start',media:active.skippedPoem || active.mode === 'images' ? 'start' : 'poem',collage:'media'};
     advance(previous[active.stage] || 'start');
   },
-  'generate-images':() => { imageIdeas(); rememberDraft(); render(); message('Sample images are ready to choose.'); },
+  'generate-images':() => { void showGenerating('images'); },
   'select-image':selectImage,
   'remove-upload':id => {
     active.uploads = active.uploads.filter(item => item.id !== id);
