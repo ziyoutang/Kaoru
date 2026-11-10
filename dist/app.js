@@ -434,12 +434,24 @@ function setSearchExpanded(form, expanded) {
 }
 function rotateHome(direction) {
   const turntable = document.querySelector('.home-turntable');
-  if (!turntable) return;
+  if (!turntable || turntable.parentElement.classList.contains('is-turning')) return;
+  const previousIndex = homeIndex();
   homeTurn += direction;
   const index = homeIndex();
   if (document.activeElement?.closest('.home-face, .entries-filters, .sense-caption')) document.querySelector('.home-next')?.focus({preventScroll:true});
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     turntable.parentElement.classList.add('is-turning');
+    const panels = turntable.querySelectorAll('.home-panel');
+    panels[previousIndex].animate([
+      {opacity:1,transform:'translateY(0) scale(1)'},
+      {opacity:0,transform:'translateY(-12px) scale(.92)'}
+    ], {duration:480,easing:'cubic-bezier(.4,0,.6,1)'});
+    panels[index].animate([
+      {opacity:0,transform:'translateY(20px) scale(.9)',offset:0},
+      {opacity:0,transform:'translateY(20px) scale(.9)',offset:.24},
+      {opacity:.85,transform:'translateY(3px) scale(.985)',offset:.78},
+      {opacity:1,transform:'translateY(0) scale(1)',offset:1}
+    ], {duration:1250,easing:'cubic-bezier(.22,.61,.36,1)'});
   }
   turntable.style.setProperty('--home-angle', `${-120 * homeTurn}deg`);
   turntable.querySelectorAll('.home-face').forEach((face,i) => {
