@@ -1114,3 +1114,16 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
  .generation-keyword{width:90px;min-height:75px;font-size:14px}
 }
 @media(prefers-reduced-motion:reduce){.generation-orb::before,.generation-keyword{animation:none}}
+
+/* Keep the complete journal workspace inside the centered writing area. */
+#main > .journal-flow-view{width:min(920px,calc(100% - 48px));height:min(65dvh,520px);margin-inline:auto;padding-block:12px}
+.journal-flow-view .journal-flow-scene{grid-template-columns:120px minmax(0,540px) 44px;gap:clamp(16px,2.5vw,32px);padding:16px 0}
+.journal-flow-view .journal-flow-footer{padding-bottom:8px}
+.journal-metadata select{width:100%;min-width:0;border:0;border-radius:0;background:transparent;color:#43454b;padding:0 14px 0 0;font:400 12px/1.6 Lekton,monospace;cursor:pointer}
+.journal-metadata select:focus-visible{outline:1px solid #7c8fab;outline-offset:4px}
+.journal-writing-sheet textarea{caret-color:#485e91}
+@media(max-width:700px){
+ #main > .journal-flow-view{width:calc(100% - 32px);height:min(76dvh,620px)}
+ .journal-flow-view .journal-flow-scene{grid-template-columns:minmax(0,1fr) 44px;gap:14px;padding:8px 0}
+ .journal-flow-view .journal-flow-scene h1{grid-column:1 / -1;margin:0}
+}

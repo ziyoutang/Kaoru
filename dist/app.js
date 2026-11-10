@@ -960,6 +960,11 @@ function renderJournalFlow() {
   const editing = stage === 'poem-edit';
   const poem = stage === 'poem' || editing;
   const date = active.journalDate || active.created.slice(0,10);
+  const metadataOptions = (field, choices) => {
+    const value = active[field] || '';
+    const options = value && !choices.includes(value) ? [value,...choices] : choices;
+    return `<option value="">Select…</option>${options.map(option => `<option value="${esc(option)}"${option === value ? ' selected' : ''}>${esc(option)}</option>`).join('')}`;
+  };
   main.innerHTML = `<div class="wrap view journal-flow-view">
     ${button('journal-back','Back','link','','back')}
     <div class="journal-flow-scene">
@@ -968,8 +973,8 @@ function renderJournalFlow() {
         <input aria-label="Journal title" data-field="title" maxlength="90" placeholder="Journal Title" value="${esc(active.title)}">
         <div class="journal-metadata">
           <label>Date<input aria-label="Date" type="date" data-field="journalDate" value="${esc(date)}"></label>
-          <label>Weather<input aria-label="Weather" data-field="weather" maxlength="40" placeholder="Weather" value="${esc(active.weather)}"></label>
-          <label>Feeling<input aria-label="Feeling" data-field="feeling" maxlength="40" placeholder="Feeling" value="${esc(active.feeling)}"></label>
+          <label>Weather<select aria-label="Weather" data-field="weather">${metadataOptions('weather',['Sunny','Cloudy','Rainy','Snowy','Windy','Foggy','Stormy'])}</select></label>
+          <label>Feeling<select aria-label="Feeling" data-field="feeling">${metadataOptions('feeling',['Happy','Calm','Grateful','Excited','Reflective','Tired','Sad','Anxious','Frustrated','Mixed'])}</select></label>
         </div>
         <textarea id="journal" aria-label="Journal content" data-field="journal" maxlength="2400" placeholder="Journal content…">${esc(active.journal)}</textarea>
       </section>` : stage === 'journal-choice' ? `<div class="journal-paths" aria-label="Choose what to create">
@@ -1444,6 +1449,10 @@ document.addEventListener('click', event => {
   else render(true);
 });
 document.addEventListener('input', event => {
+  if (event.target.matches('.journal-writing-sheet textarea') && !event.isComposing && event.inputType === 'insertText' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    event.target.getAnimations().forEach(animation => animation.cancel());
+    event.target.animate([{transform:'translateY(.7px)'},{transform:'translateY(0)'}],{duration:130,easing:'ease-out'});
+  }
   if (event.target.id === 'capture-detail') updateCaptureModels();
   if (event.target.id === 'sense-memory-detail') {
     const types = detectSenses(event.target.value);
