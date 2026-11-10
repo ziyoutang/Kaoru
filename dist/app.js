@@ -960,10 +960,11 @@ function renderJournalFlow() {
   const editing = stage === 'poem-edit';
   const poem = stage === 'poem' || editing;
   const date = active.journalDate || active.created.slice(0,10);
+  const metadataIcons = {Sunny:'☀️',Cloudy:'☁️',Rainy:'🌧️',Snowy:'❄️',Windy:'🌬️',Foggy:'🌫️',Stormy:'⛈️',Happy:'😊',Calm:'😌',Grateful:'🥰',Excited:'🤩',Reflective:'🤔',Tired:'😴',Sad:'😔',Anxious:'😟',Frustrated:'😤',Mixed:'😶'};
   const metadataOptions = (field, choices) => {
     const value = active[field] || '';
     const options = value && !choices.includes(value) ? [value,...choices] : choices;
-    return `<option value="">Select…</option>${options.map(option => `<option value="${esc(option)}"${option === value ? ' selected' : ''}>${esc(option)}</option>`).join('')}`;
+    return `<option value="" aria-label="Not selected">—</option>${options.map(option => `<option value="${esc(option)}" aria-label="${esc(option)}" title="${esc(option)}"${option === value ? ' selected' : ''}>${metadataIcons[option] || esc(option)}</option>`).join('')}`;
   };
   main.innerHTML = `<div class="wrap view journal-flow-view">
     ${button('journal-back','Back','link','','back')}

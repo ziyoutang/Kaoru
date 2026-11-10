@@ -1127,3 +1127,7 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
  .journal-flow-view .journal-flow-scene{grid-template-columns:minmax(0,1fr) 44px;gap:14px;padding:8px 0}
  .journal-flow-view .journal-flow-scene h1{grid-column:1 / -1;margin:0}
 }
+
+.journal-metadata select{font-size:17px;line-height:1.2}
+
+#main > .journal-flow-view{margin-top:clamp(12px,3dvh,24px)}
