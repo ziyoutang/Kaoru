@@ -388,12 +388,6 @@ function renderDiary() {
     <div class="entries-logo">
       <h1 data-node-id="18:243">Kaoru</h1>
       <p data-node-id="18:244">keep what lingers</p>
-      <nav class="nav home-main-nav" aria-label="Main navigation">
-        <a href="#diary" aria-current="page">Entries</a>
-        <a href="#scents">Scent index</a>
-        <a href="#create">Create New</a>
-        <a href="#saved">Saved</a>
-      </nav>
     </div>
     <nav class="entries-filters" aria-label="Filter entries">
       ${['All','Collages','Recent','Journal','Poems'].map(label => `<button type="button" data-action="filter" data-value="${label}" aria-pressed="${label === filter}">${label === 'All' ? 'ALL' : label}</button>`).join('')}

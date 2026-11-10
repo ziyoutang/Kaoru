@@ -1061,7 +1061,3 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 .upload-transition::view-transition-new(root){animation:none}
 @keyframes writing-option-fade{to{opacity:0}}
 @media(max-width:650px){.upload-centered h1{position:static}}
-
-.home-main-nav{margin-top:16px;white-space:normal}
-.entries-home .sense-caption{top:auto;bottom:26%}
-@media(max-width:700px){.home-main-nav{margin-top:10px}.home-main-nav a{font-size:12px}}
