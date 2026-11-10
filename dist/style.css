@@ -480,7 +480,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .sense-caption a{color:var(--navy);text-decoration:underline;text-underline-offset:3px}
 .home-create{position:absolute;top:var(--scene-center-y);left:var(--home-center);transform:translate(-50%,-50%);text-align:center;width:min(86%,410px)}
 .btn.home-create-button{
-  border:0;background:transparent;color:var(--navy);font:400 clamp(26px,2.6cqw,40px)/1 Lekton,monospace;
+  border:0;background:transparent;color:var(--navy);font:400 clamp(20.8px,2.08cqw,32px)/1 Lekton,monospace;
 }
 .btn.home-create-button:hover{text-decoration:underline;text-underline-offset:6px}
 .home-create p{color:#666;font:italic 400 clamp(13px,1.15cqw,17px)/1.35 var(--entries-type);margin-top:8px}
