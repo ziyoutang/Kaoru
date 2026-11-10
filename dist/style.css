@@ -1048,3 +1048,20 @@ body:has(#main > .view) .bar{padding-top:var(--brand-top);gap:16px}
 body:has(#main > .view) .brand{font:400 var(--brand-size)/.95 Lekton,monospace;gap:var(--brand-gap);letter-spacing:0}
 body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height:1.2}
 @media(max-width:700px){:root{--brand-top:6dvh;--brand-size:clamp(28px,6.3dvh,43px);--brand-caption:clamp(9px,1.7dvh,12px);--brand-gap:6px}}
+
+/* Carry the folder into the upload scene while the writing option fades. */
+.upload-centered{position:relative}
+.upload-centered h1{position:absolute;left:0}
+.upload-transition [data-action="writing-upload"],
+.upload-transition .upload-object{view-transition-name:upload-folder}
+.upload-transition [data-action="writing-prompt"]{view-transition-name:writing-prompt}
+.upload-transition::view-transition-group(upload-folder){animation-duration:1s;animation-timing-function:cubic-bezier(.22,.61,.36,1)}
+.upload-transition::view-transition-old(writing-prompt){animation:writing-option-fade .8s ease both}
+.upload-transition::view-transition-old(root){animation:none;opacity:0}
+.upload-transition::view-transition-new(root){animation:none}
+@keyframes writing-option-fade{to{opacity:0}}
+@media(max-width:650px){.upload-centered h1{position:static}}
+
+.home-main-nav{margin-top:16px;white-space:normal}
+.entries-home .sense-caption{top:auto;bottom:26%}
+@media(max-width:700px){.home-main-nav{margin-top:10px}.home-main-nav a{font-size:12px}}

@@ -147,12 +147,12 @@ function renderHeader(page) {
       <span class="brand-mark">Kaoru</span>
       <span class="brand-slogan">keep what lingers</span>
     </a>
-    <nav class="nav" aria-label="Main navigation">
+    ${page === 'create' ? '' : `<nav class="nav" aria-label="Main navigation">
       <a href="#diary">Entries</a>
       <a href="#scents"${['scents','scent'].includes(page) ? ' aria-current="page"' : ''}>Scent index</a>
       <a href="#create"${['create','edit','sense-select','capture','name-sense','reuse-sense','captured'].includes(page) ? ' aria-current="page"' : ''}>Create New</a>
       <a href="#saved"${page === 'saved' ? ' aria-current="page"' : ''}>Saved</a>
-    </nav>
+    </nav>`}
   </div>`;
 }
 function photos(entry) {
@@ -388,6 +388,12 @@ function renderDiary() {
     <div class="entries-logo">
       <h1 data-node-id="18:243">Kaoru</h1>
       <p data-node-id="18:244">keep what lingers</p>
+      <nav class="nav home-main-nav" aria-label="Main navigation">
+        <a href="#diary" aria-current="page">Entries</a>
+        <a href="#scents">Scent index</a>
+        <a href="#create">Create New</a>
+        <a href="#saved">Saved</a>
+      </nav>
     </div>
     <nav class="entries-filters" aria-label="Filter entries">
       ${['All','Collages','Recent','Journal','Poems'].map(label => `<button type="button" data-action="filter" data-value="${label}" aria-pressed="${label === filter}">${label === 'All' ? 'ALL' : label}</button>`).join('')}
@@ -835,7 +841,7 @@ function renderWritingChoice() {
   const files = active.sourceFiles?.length ? active.sourceFiles : active.mode === 'images' ? active.uploads : [];
   main.innerHTML = `<div class="wrap view writing-choice-view">
     ${uploading ? button('writing-choice','Back to choices','link','','back') : backLink('#create','Back to Create New')}
-    <div class="writing-object-scene">
+    <div class="writing-object-scene${uploading && !files.length ? ' upload-centered' : ''}">
       <h1>${label}</h1>
       ${uploading ? '' : `<button class="writing-object" data-action="writing-prompt"><canvas class="sense-model" data-sense-model="typewriter" aria-hidden="true"></canvas><span>Write Prompt</span></button>`}
       ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><input aria-label="Upload files" id="choice-upload" type="file" ${active.mode === 'journal' ? `accept="${journalFileExtensions.map(ext=>`.${ext}`).join(',')}"` : ''} multiple></label><span>Upload</span></div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
@@ -1235,7 +1241,14 @@ function carryLine(value) {
 const actions = {
   'download-attachment':id => { void downloadAttachment(id); },
   'writing-choice':() => { active.stage='choose'; render(); },
-  'writing-upload':() => { active.stage='import'; render(); },
+  'writing-upload':() => {
+    const open = () => { active.stage='import'; render(); };
+    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) { open(); return; }
+    if (document.documentElement.classList.contains('upload-transition')) return;
+    document.documentElement.classList.add('upload-transition');
+    const transition = document.startViewTransition(open);
+    transition.finished.finally(() => document.documentElement.classList.remove('upload-transition'));
+  },
   'writing-prompt':() => { active.stage='start'; render(); },
   'writing-open':() => { active.stage=active.mode === 'images' ? 'media' : 'start'; rememberDraft(); render(); },
   'poem-page':turnPoemPage,
