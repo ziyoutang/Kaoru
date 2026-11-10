@@ -964,7 +964,7 @@ function renderJournalFlow() {
   const metadataOptions = (field, choices) => {
     const value = active[field] || '';
     const options = value && !choices.includes(value) ? [value,...choices] : choices;
-    return `<option value="" aria-label="Not selected">—</option>${options.map(option => `<option value="${esc(option)}" aria-label="${esc(option)}" title="${esc(option)}"${option === value ? ' selected' : ''}>${metadataIcons[option] || esc(option)}</option>`).join('')}`;
+    return `<div class="metadata-wheel" role="group" aria-label="${field === 'weather' ? 'Weather' : 'Feeling'}" data-metadata="${field}">${['',...options].map(option => `<button type="button" data-value="${esc(option)}" aria-label="${esc(option || 'Not selected')}" title="${esc(option || 'Not selected')}" aria-pressed="${option === value}">${metadataIcons[option] || esc(option) || '—'}</button>`).join('')}</div>`;
   };
   main.innerHTML = `<div class="wrap view journal-flow-view">
     ${button('journal-back','Back','link','','back')}
@@ -974,8 +974,8 @@ function renderJournalFlow() {
         <input aria-label="Journal title" data-field="title" maxlength="90" placeholder="Journal Title" value="${esc(active.title)}">
         <div class="journal-metadata">
           <label>Date<input aria-label="Date" type="date" data-field="journalDate" value="${esc(date)}"></label>
-          <label>Weather<select aria-label="Weather" data-field="weather">${metadataOptions('weather',['Sunny','Cloudy','Rainy','Snowy','Windy','Foggy','Stormy'])}</select></label>
-          <label>Feeling<select aria-label="Feeling" data-field="feeling">${metadataOptions('feeling',['Happy','Calm','Grateful','Excited','Reflective','Tired','Sad','Anxious','Frustrated','Mixed'])}</select></label>
+          <div class="metadata-field"><span>Weather</span>${metadataOptions('weather',['Sunny','Cloudy','Rainy','Snowy','Windy','Foggy','Stormy'])}</div>
+          <div class="metadata-field"><span>Feeling</span>${metadataOptions('feeling',['Happy','Calm','Grateful','Excited','Reflective','Tired','Sad','Anxious','Frustrated','Mixed'])}</div>
         </div>
         <textarea id="journal" aria-label="Journal content" data-field="journal" maxlength="2400" placeholder="Journal content…">${esc(active.journal)}</textarea>
       </section>` : stage === 'journal-choice' ? `<div class="journal-paths" aria-label="Choose what to create">
@@ -989,6 +989,28 @@ function renderJournalFlow() {
     </div>
     <div class="journal-flow-footer">${button('save-draft','Save & exit','link')}${poem ? button('save-poem','Save poem','link') : button('save-note','Save journal','link')}</div>
   </div>`;
+  main.querySelectorAll('.metadata-wheel').forEach(wheel => {
+    const options = [...wheel.children];
+    const select = option => {
+      options.forEach(item => item.setAttribute('aria-pressed',String(item === option)));
+      active[wheel.dataset.metadata] = option.dataset.value;
+      rememberDraft();
+    };
+    const position = option => option.offsetTop - options[0].offsetTop;
+    wheel.scrollTop = position(wheel.querySelector('[aria-pressed="true"]'));
+    let settle;
+    wheel.addEventListener('scroll', () => {
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        if (!wheel.isConnected) return;
+        select(options.reduce((nearest,item) => Math.abs(position(item)-wheel.scrollTop) < Math.abs(position(nearest)-wheel.scrollTop) ? item : nearest));
+      },100);
+    },{passive:true});
+    options.forEach(option => option.addEventListener('click', () => {
+      select(option);
+      wheel.scrollTo({top:position(option),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+    }));
+  });
   if (stage === 'poem') {
     const output = main.querySelector('.poem-reveal'), text = active.poem;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { output.textContent = text; return; }

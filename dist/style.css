@@ -1119,8 +1119,6 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 #main > .journal-flow-view{width:min(920px,calc(100% - 48px));height:min(65dvh,520px);margin-inline:auto;padding-block:12px}
 .journal-flow-view .journal-flow-scene{grid-template-columns:120px minmax(0,540px) 44px;gap:clamp(16px,2.5vw,32px);padding:16px 0}
 .journal-flow-view .journal-flow-footer{padding-bottom:8px}
-.journal-metadata select{width:100%;min-width:0;border:0;border-radius:0;background:transparent;color:#43454b;padding:0 14px 0 0;font:400 12px/1.6 Lekton,monospace;cursor:pointer}
-.journal-metadata select:focus-visible{outline:1px solid #7c8fab;outline-offset:4px}
 .journal-writing-sheet textarea{caret-color:#485e91}
 @media(max-width:700px){
  #main > .journal-flow-view{width:calc(100% - 32px);height:min(76dvh,620px)}
@@ -1128,6 +1126,12 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
  .journal-flow-view .journal-flow-scene h1{grid-column:1 / -1;margin:0}
 }
 
-.journal-metadata select{font-size:17px;line-height:1.2}
 
 #main > .journal-flow-view{margin-top:clamp(12px,3dvh,24px)}
+
+.metadata-field > span{font:italic 11px/1.4 Inter,sans-serif;color:#777}
+.metadata-wheel{position:relative;height:60px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y mandatory;padding-block:16px;box-sizing:border-box;scrollbar-width:none;mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
+.metadata-wheel::-webkit-scrollbar{display:none}
+.metadata-wheel button{display:block;width:100%;height:28px;min-height:28px;padding:0;border:0;background:transparent;scroll-snap-align:center;font-size:19px;line-height:28px;opacity:.4;scale:.85;transition:opacity .18s,scale .18s;cursor:pointer}
+.metadata-wheel button[aria-pressed="true"]{opacity:1;scale:1}
+.metadata-wheel button:focus-visible{outline:1px solid #7c8fab;outline-offset:-2px}
