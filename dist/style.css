@@ -405,7 +405,7 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .home-turntable{
   position:absolute;inset:0;transform-style:preserve-3d;
   transform:translateZ(calc(-1 * var(--orbit-radius))) rotateY(var(--home-angle,0deg));
-  transition:transform 960ms cubic-bezier(.24,.68,.22,1);
+  transition:transform 1100ms cubic-bezier(.24,.68,.22,1);
 }
 .home-face{
   position:absolute;inset:0;backface-visibility:hidden;
@@ -414,9 +414,9 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 .home-face[inert]{pointer-events:none}
 .home-panel{
   position:absolute;inset:0;opacity:1;
-  transition:opacity 900ms cubic-bezier(.3,.42,.5,1);
+  transition:opacity 760ms ease-out 240ms;
 }
-.home-face[inert] .home-panel{opacity:0}
+.home-face[inert] .home-panel{opacity:0;transition:opacity 420ms ease-in}
 .face-senses{--home-face-angle:120deg}
 .face-create{--home-face-angle:240deg}
 .entries-logo,.entries-filters,.entries-search,.sense-caption,.home-next{z-index:2}
