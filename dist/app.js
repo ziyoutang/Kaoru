@@ -147,12 +147,6 @@ function renderHeader(page) {
       <span class="brand-mark">Kaoru</span>
       <span class="brand-slogan">keep what lingers</span>
     </a>
-    ${page === 'create' ? '' : `<nav class="nav" aria-label="Main navigation">
-      <a href="#diary">Entries</a>
-      <a href="#scents"${['scents','scent'].includes(page) ? ' aria-current="page"' : ''}>Scent index</a>
-      <a href="#create"${['create','edit','sense-select','capture','name-sense','reuse-sense','captured'].includes(page) ? ' aria-current="page"' : ''}>Create New</a>
-      <a href="#saved"${page === 'saved' ? ' aria-current="page"' : ''}>Saved</a>
-    </nav>`}
   </div>`;
 }
 function photos(entry) {
