@@ -535,23 +535,34 @@ function shapeSenseWheel() {
   const wheel = document.querySelector('.sense-wheel');
   if (!wheel) return;
   const center = wheel.getBoundingClientRect().top + wheel.clientHeight / 2;
-  wheel.querySelectorAll('.sense-wheel-item').forEach(item => {
+  let closest = null, closestDistance = Infinity;
+  const items = wheel.querySelectorAll('.sense-wheel-item');
+  items.forEach(item => {
     const rect = item.getBoundingClientRect();
     const distance = Math.min(1,Math.abs(rect.top + rect.height / 2 - center) / (wheel.clientHeight / 2));
+    if (distance < closestDistance) { closest = item; closestDistance = distance; }
     item.style.transform = `translateX(${-32 * distance * distance}px) scale(${1 - distance * .18})`;
     item.style.opacity = 1 - distance * .45;
   });
+  items.forEach(item => item.classList.toggle('is-centered',item === closest));
 }
 function showSenseWheel() {
   const panel = document.querySelector('#saved-sense-wheel');
   if (!panel.hidden) return;
-  panel.hidden = false;
-  panel.closest('.sense-choices').classList.add('is-browsing');
-  document.querySelector('[data-action="show-sense-wheel"]').setAttribute('aria-expanded','true');
-  const wheel = panel.querySelector('.sense-wheel');
-  wheel.addEventListener('scroll',shapeSenseWheel,{passive:true});
-  window.KaoruSenses.mount(panel);
-  requestAnimationFrame(shapeSenseWheel);
+  const reveal = () => {
+    panel.hidden = false;
+    panel.closest('.sense-choices').classList.add('is-browsing');
+    document.querySelector('[data-action="show-sense-wheel"]').setAttribute('aria-expanded','true');
+    const wheel = panel.querySelector('.sense-wheel');
+    wheel.addEventListener('scroll',shapeSenseWheel,{passive:true});
+    window.KaoruSenses.mount(panel);
+    requestAnimationFrame(shapeSenseWheel);
+  };
+  if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) { reveal(); return; }
+  if (document.documentElement.classList.contains('reuse-transition')) return;
+  document.documentElement.classList.add('reuse-transition');
+  const transition = document.startViewTransition(reveal);
+  transition.finished.finally(() => document.documentElement.classList.remove('reuse-transition'));
 }
 function renderCapture(type) {
   const draft = senseDraft;

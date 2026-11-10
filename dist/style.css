@@ -1061,3 +1061,17 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 .upload-transition::view-transition-new(root){animation:none}
 @keyframes writing-option-fade{to{opacity:0}}
 @media(max-width:650px){.upload-centered h1{position:static}}
+
+/* Reuse opens with the same gentle handoff as Upload. */
+.sense-choices.is-browsing{grid-template-columns:repeat(2,minmax(0,1fr));max-width:900px}
+.sense-choices.is-browsing > a.flow-tile{display:none}
+.reuse-transition [data-action="show-sense-wheel"]{view-transition-name:reuse-sense}
+.reuse-transition .sense-choices > a.flow-tile{view-transition-name:capture-option}
+.reuse-transition::view-transition-group(reuse-sense){animation-duration:1s;animation-timing-function:cubic-bezier(.22,.61,.36,1)}
+.reuse-transition::view-transition-old(capture-option){animation:writing-option-fade .8s ease both}
+.reuse-transition::view-transition-old(root){animation:none;opacity:0}
+.reuse-transition::view-transition-new(root){animation:none}
+.sense-wheel-object{transition:filter .35s ease}
+.sense-wheel-item.is-centered .sense-wheel-object{filter:drop-shadow(0 0 9px #779bd199) drop-shadow(0 6px 12px #486aab66)}
+@media(max-width:650px){.sense-choices.is-browsing .sense-wheel-panel{grid-column:auto}}
+@media(prefers-reduced-motion:reduce){.sense-wheel-object{transition:none}}
