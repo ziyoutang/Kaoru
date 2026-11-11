@@ -157,6 +157,24 @@ window.KaoruSenses = (() => {
     } else if(key==='leaf') {
       surface((u,v)=>{const a=v*2*Math.PI,w=Math.sin(u*Math.PI)*.46;return [w*Math.cos(a),u*1.7-.85,.15*Math.sin(u*4)+.06*Math.sin(a)*Math.sin(u*Math.PI)];});
       tube(u=>[0,u*1.7-.85,.15*Math.sin(u*4)+.055],.025);
+    } else if(key==='cup') {
+      surface((u,v)=>{const a=u*Math.PI*2,r=.48+.07*v;return [r*Math.cos(a),-.48+v*.9,r*Math.sin(a)];});
+      tube(u=>[.55*Math.cos(u*Math.PI*2),.42,.55*Math.sin(u*Math.PI*2)],.045);
+      tube(u=>[.48+.35*Math.sin(u*Math.PI),.32-.68*u,0],.085);
+      pebble(0,-.48,0,.48,.045,.48);
+    } else if(key==='book') {
+      pebble(0,0,0,.64,.82,.16,.2);
+      for(const z of [-.19,.19]) pebble(0,0,z,.69,.86,.035,.2);
+      pebble(-.65,0,0,.06,.85,.20,.3);
+    } else if(key==='apple') {
+      pebble(-.17,-.08,0,.48,.56,.52);
+      pebble(.17,-.08,0,.48,.56,.52);
+      tube(u=>[.06*u,.40+.30*u,0],.045);
+      pebble(.22,.57,0,.22,.08,.08);
+    } else if(key==='candle') {
+      pebble(0,-.13,0,.38,.58,.38,.35);
+      tube(u=>[0,.43+.17*u,0],.025);
+      pebble(0,.70,0,.10,.18,.08);
     } else if(key==='typewriter') {
       pebble(0,-.45,0,.88,.24,.55,.25);
       pebble(0,-.08,-.22,.78,.30,.26,.3);
@@ -254,7 +272,7 @@ window.KaoruSenses = (() => {
     const position=gl.getAttribLocation(program,'position'),normal=gl.getAttribLocation(program,'normal');
     const angles=gl.getUniformLocation(program,'angles'),scale=gl.getUniformLocation(program,'scale');
     const pigment=gl.getUniformLocation(program,'pigment'),material=gl.getUniformLocation(program,'material');
-    const finishes={citrus:[[.95,.45,.095],1],pavement:[[.32,.35,.37],2],flower:[[.66,.54,.72],0],leaf:[[.43,.56,.36],0],fabric:[[.80,.75,.64],3],sweet:[[.76,.51,.30],0],wisp:[[.63,.69,.71],0]};
+    const finishes={cup:[[.48,.65,.70],0],book:[[.43,.52,.66],0],apple:[[.73,.30,.23],0],candle:[[.91,.77,.52],0],citrus:[[.95,.45,.095],1],pavement:[[.32,.35,.37],2],flower:[[.66,.54,.72],0],leaf:[[.43,.56,.36],0],fabric:[[.80,.75,.64],3],sweet:[[.76,.51,.30],0],wisp:[[.63,.69,.71],0]};
     const meshes=new Map();
     return (key, width, height, yaw, pitch) => {
       if (!meshes.has(key)) {

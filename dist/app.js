@@ -955,6 +955,44 @@ async function importChoiceFiles(input) {
   finally { input.disabled=false; input.value=''; }
 }
 
+let journalObjectTimer;
+const journalObjects = [
+  ['citrus', /\b(oranges?|lemons?|citrus|grapefruit|peels?)\b/i],
+  ['cup', /\b(cups?|mugs?|coffee|tea)\b/i],
+  ['book', /\b(books?|novels?|notebooks?)\b/i],
+  ['flower', /\b(flowers?|roses?|lavender|jasmine|blossoms?)\b/i],
+  ['apple', /\b(apples?)\b/i],
+  ['candle', /\b(candles?)\b/i],
+  ['leaf', /\b(leaves|leaf|trees?|forest|grass)\b/i],
+  ['pavement', /\b(rain|pavement|stones?|pebbles?)\b/i],
+  ['fabric', /\b(scarves|scarf|blankets?|linen|fabric|silk|cotton)\b/i],
+  ['sweet', /\b(sugar|candy|chocolate|caramel)\b/i]
+];
+function updateJournalObjects() {
+  const container = main.querySelector('.journal-objects');
+  const input = main.querySelector('#journal');
+  if (!container || !input) return;
+  const matches = journalObjects.map(([type,pattern]) => ({type,match:pattern.exec(input.value)}))
+    .filter(item => item.match).sort((a,b) => a.match.index-b.match.index).slice(0,4);
+  const signature = matches.map(item => item.type).join(',');
+  if (container.dataset.objects === signature) return;
+  container.dataset.objects = signature;
+  const keep = new Set(matches.map(item => item.type));
+  [...container.children].forEach(item => { if (!keep.has(item.dataset.object)) item.remove(); });
+  matches.forEach(({type,match},index) => {
+    let item = container.querySelector(`[data-object="${type}"]`);
+    if (!item) {
+      item = document.createElement('div');
+      item.className = 'journal-object';
+      item.dataset.object = type;
+      item.innerHTML = `<canvas class="sense-model" data-sense-model="${type}" aria-hidden="true"></canvas><small>${esc(match[0])}</small>`;
+    }
+    item.style.setProperty('--object-row',Math.floor(index/2));
+    container.append(item);
+  });
+  window.KaoruSenses.mount(container);
+}
+
 function setJournalFocus(expanded) {
   const sheet = main.querySelector('.journal-writing-sheet');
   if (!sheet) return;
@@ -962,6 +1000,7 @@ function setJournalFocus(expanded) {
   if (view.classList.contains('is-writing-focus') === expanded) return;
   const before = sheet.getBoundingClientRect();
   view.classList.toggle('is-writing-focus',expanded);
+  if (expanded) updateJournalObjects();
   const after = sheet.getBoundingClientRect();
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) sheet.animate([
     {transform:`translate(${before.left-after.left}px,${before.top-after.top}px) scale(${before.width/after.width},${before.height/after.height})`},
@@ -982,6 +1021,7 @@ function renderJournalFlow() {
     return `<div class="metadata-selector"><button type="button" class="metadata-arrow" data-step="-1" aria-label="Previous ${field}">‹</button><div class="metadata-wheel" role="group" aria-label="${field === 'weather' ? 'Weather' : 'Feeling'}" data-metadata="${field}">${options.map(option => `<button type="button" data-value="${esc(option)}" aria-label="${esc(option)}" title="${esc(option)}" aria-pressed="${option === value}">${metadataIcons[option] || esc(option)}</button>`).join('')}</div><button type="button" class="metadata-arrow" data-step="1" aria-label="Next ${field}">›</button></div>`;
   };
   main.innerHTML = `<div class="wrap view journal-flow-view">
+    <div class="journal-objects" aria-hidden="true"></div>
     ${button('journal-back','Back','link','','back')}
     <div class="journal-flow-scene">
       <h1>${poem ? 'Poem' : 'Journal'}</h1>
@@ -1507,7 +1547,11 @@ document.addEventListener('click', event => {
   else render(true);
 });
 document.addEventListener('input', event => {
-  if (event.target.id === 'journal' && event.target.closest('.journal-writing-sheet')) setJournalFocus(true);
+  if (event.target.id === 'journal' && event.target.closest('.journal-writing-sheet')) {
+    setJournalFocus(true);
+    clearTimeout(journalObjectTimer);
+    journalObjectTimer = setTimeout(updateJournalObjects,500);
+  }
   if (event.target.matches('.journal-writing-sheet textarea') && !event.isComposing && event.inputType === 'insertText' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     event.target.getAnimations().forEach(animation => animation.cancel());
     event.target.animate([{transform:'translateY(.7px)'},{transform:'translateY(0)'}],{duration:130,easing:'ease-out'});
