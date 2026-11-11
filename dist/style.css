@@ -1139,3 +1139,8 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 .metadata-wheel button{display:block;flex:0 0 32px;width:32px;height:36px;min-height:36px;padding:0;border:0;background:transparent;scroll-snap-align:center;font-size:19px;line-height:36px;opacity:.4;scale:.85;transition:opacity .18s,scale .18s,filter .18s;cursor:pointer}
 .metadata-wheel button[aria-pressed="true"]{opacity:1;scale:1;filter:drop-shadow(0 0 4px #739cdbaa)}
 .metadata-wheel button:focus-visible{outline:1px solid #7c8fab;outline-offset:-2px}
+
+.journal-metadata > label,.journal-metadata > .metadata-field{display:grid;grid-template-rows:16px 40px;gap:0;align-items:center;min-width:0;margin:0}
+.journal-metadata > label{align-content:start}
+.journal-metadata input[type="date"]{height:40px;box-sizing:border-box}
+.journal-metadata .metadata-field > span{display:block;line-height:16px}
