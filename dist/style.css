@@ -1059,7 +1059,7 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 .upload-transition::view-transition-old(writing-prompt){animation:writing-option-fade .8s ease both}
 .upload-transition::view-transition-old(root){animation:none;opacity:0}
 .upload-transition::view-transition-new(root){animation:none}
-@keyframes writing-option-fade{to{opacity:0}}
+@keyframes writing-option-fade{to{opacity:0;transform:translateX(-36px)}}
 @media(max-width:650px){.upload-centered h1{position:static}}
 
 /* Reuse opens with the same gentle handoff as Upload. */
@@ -1211,3 +1211,30 @@ body:has(.generation-focus) #header,body:has(.generation-focus) .light-switch,bo
 .poem-focus.is-revealing > .btn,.poem-focus.is-revealing .journal-flow-next,.poem-focus.is-revealing .journal-flow-footer{visibility:hidden;opacity:0;pointer-events:none}
 @keyframes poem-focus-in{from{opacity:0;scale:.97}to{opacity:1;scale:1}}
 @media(prefers-reduced-motion:reduce){#main > .generation-focus,#main > .poem-focus{animation:none}}
+
+.journal-paths{position:relative}
+.journal-path{transition:background .25s,color .25s,opacity .6s ease,transform .7s cubic-bezier(.22,.61,.36,1)}
+.journal-paths.has-choice .journal-path:not(.is-selected){opacity:0;transform:translateX(-45px);pointer-events:none}
+.journal-paths.has-choice .journal-path:nth-child(2):not(.is-selected){transform:translateX(45px)}
+.journal-path-detail{position:absolute;top:calc(100% + 20px);left:50%;width:min(390px,100%);translate:-50% 0;text-align:center;opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .5s .3s,transform .5s .3s,visibility 0s .3s}
+.journal-paths.has-choice .journal-path-detail{opacity:1;visibility:visible;transform:none}
+.journal-path-detail p{margin:0;color:var(--sub);font:13px/1.5 Lekton,monospace}
+.journal-path-detail .btn{margin-top:8px;font:12px Lekton,monospace}
+.path-ready .journal-flow-next .icon-btn{animation:path-next-bob 2s .6s ease-in-out infinite}
+@keyframes path-next-bob{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@media(prefers-reduced-motion:reduce){.journal-path,.journal-path-detail{transition:none}.path-ready .journal-flow-next .icon-btn{animation:none}}
+
+/* Keep the upload back control aligned with the preceding choice screen. */
+.writing-choice-view > .btn.link:first-child{align-self:flex-start;width:auto;justify-content:flex-start}
+.upload-transition::view-transition-old(upload-folder){animation:upload-folder-out 1s ease both}
+.upload-transition::view-transition-new(upload-folder){animation:upload-folder-in 1s ease both}
+@keyframes upload-folder-out{0%{opacity:1}100%{opacity:0}}
+@keyframes upload-folder-in{0%{opacity:0}100%{opacity:1}}
+
+/* A quiet, centered poem with the familiar masthead retained. */
+body:has(.poem-focus) #header{visibility:visible;z-index:20;background:transparent}
+#main > .poem-focus{background:transparent}
+.poem-focus .journal-flow-scene{position:relative;width:min(680px,80vw);gap:24px}
+.poem-focus .journal-poem-preview{width:auto;flex:1;min-width:0}
+.poem-focus .journal-flow-next{position:static;flex:0 0 52px}
+.poem-focus > .btn{top:24dvh}

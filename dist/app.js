@@ -993,6 +993,45 @@ function updateJournalObjects() {
   window.KaoruSenses.mount(container);
 }
 
+let journalAudio;
+function playTypewriterClick() {
+  try {
+    if (!journalAudio || journalAudio.state !== 'running') return;
+    const now = journalAudio.currentTime, oscillator = journalAudio.createOscillator(), gain = journalAudio.createGain();
+    oscillator.type = 'triangle';
+    oscillator.frequency.setValueAtTime(180,now);
+    oscillator.frequency.exponentialRampToValueAtTime(70,now + .025);
+    gain.gain.setValueAtTime(.035,now);
+    gain.gain.exponentialRampToValueAtTime(.001,now + .035);
+    oscillator.connect(gain).connect(journalAudio.destination);
+    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+    oscillator.start(now); oscillator.stop(now + .04);
+  } catch {}
+}
+function playPaperShuffle() {
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) return;
+    journalAudio ||= new Audio();
+    void journalAudio.resume().catch(() => {});
+    const audio = journalAudio, now = audio.currentTime;
+    const buffer = audio.createBuffer(1, Math.ceil(audio.sampleRate * .45), audio.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) {
+      const t = i / samples.length;
+      samples[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * t) * (.6 + .4 * Math.sin(t * 30));
+    }
+    const source = audio.createBufferSource(), filter = audio.createBiquadFilter(), gain = audio.createGain();
+    source.buffer = buffer;
+    filter.type = 'bandpass';
+    filter.frequency.value = 1800;
+    filter.Q.value = .6;
+    gain.gain.value = .075;
+    source.connect(filter).connect(gain).connect(audio.destination);
+    source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
+    source.start(now);
+  } catch {}
+}
 function setJournalFocus(expanded) {
   const sheet = main.querySelector('.journal-writing-sheet');
   if (!sheet) return;
@@ -1000,7 +1039,7 @@ function setJournalFocus(expanded) {
   if (view.classList.contains('is-writing-focus') === expanded) return;
   const before = sheet.getBoundingClientRect();
   view.classList.toggle('is-writing-focus',expanded);
-  if (expanded) updateJournalObjects();
+  if (expanded) { updateJournalObjects(); playPaperShuffle(); }
   const after = sheet.getBoundingClientRect();
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) sheet.animate([
     {transform:`translate(${before.left-after.left}px,${before.top-after.top}px) scale(${before.width/after.width},${before.height/after.height})`},
@@ -1035,8 +1074,9 @@ function renderJournalFlow() {
         <button type="button" class="journal-focus-done" data-action="journal-focus-done">Done writing</button>
         <textarea id="journal" aria-label="Journal content" data-field="journal" maxlength="2400" placeholder="Journal content…">${esc(active.journal)}</textarea>
       </section>` : stage === 'journal-choice' ? `<div class="journal-paths" aria-label="Choose what to create">
-        <button class="journal-path is-selected" data-action="journal-path" data-value="poem" aria-pressed="true">Generate<br>poem?</button>
+        <button class="journal-path" data-action="journal-path" data-value="poem" aria-pressed="false">Generate<br>poem?</button>
         <button class="journal-path" data-action="journal-path" data-value="images" aria-pressed="false">Skip to<br>image</button>
+        <div class="journal-path-detail"><p role="status"></p><button type="button" class="btn link" data-action="journal-change-path">Change choice</button></div>
       </div>` : `<div class="journal-poem-preview">${editing ? `<textarea aria-label="Edit poem" data-field="poem" maxlength="2000">${esc(active.poem)}</textarea>` : `<p class="poem-reveal" aria-label="${esc(active.poem)}"></p>`}</div>`}
       <div class="journal-flow-next">
         ${poem ? button(editing ? 'journal-finish-edit' : 'journal-edit-poem',editing ? 'Done' : 'edit?','link') : ''}
@@ -1048,6 +1088,7 @@ function renderJournalFlow() {
       <button type="button" class="journal-save-draft" data-action="save-draft"><span>Save draft & exit</span></button>
     </div></div>
   </div>`;
+  if (stage === 'journal-choice') main.querySelector('[data-action="journal-generate"]').disabled = true;
   main.querySelectorAll('.metadata-wheel').forEach(wheel => {
     const options = [...wheel.children];
     const arrows = [...wheel.parentElement.querySelectorAll('.metadata-arrow')];
@@ -1092,7 +1133,8 @@ function renderJournalFlow() {
     const start = performance.now();
     const reveal = time => {
       if (!output.isConnected) return;
-      const count = Math.floor((time-start)/24);
+      const count = Math.min(text.length,Math.floor((time-start)/75));
+      if (count > output.textContent.length && /\S/.test(text[count-1] || '')) playTypewriterClick();
       output.textContent = text.slice(0,count);
       if (count < text.length) requestAnimationFrame(reveal);
       else finish();
@@ -1477,9 +1519,32 @@ const actions = {
       const selected = item.dataset.value === value;
       item.classList.toggle('is-selected',selected);
       item.setAttribute('aria-pressed',String(selected));
+      item.inert = !selected;
     });
+    const paths = main.querySelector('.journal-paths');
+    paths.classList.add('has-choice');
+    paths.querySelector('p').textContent = value === 'poem'
+      ? 'Turn your journal into a short sample poem inspired by your words and sensory details. You can edit it next.'
+      : 'Gather photos, uploaded keepsakes, and sample image ideas, then layer them into a collage.';
+    main.querySelector('.journal-flow-scene').classList.add('path-ready');
+    main.querySelector('[data-action="journal-generate"]').disabled = false;
+  },
+  'journal-change-path':() => {
+    main.querySelector('.journal-paths').classList.remove('has-choice');
+    main.querySelector('.journal-flow-scene').classList.remove('path-ready');
+    main.querySelectorAll('.journal-path').forEach(item => {
+      item.inert = false;
+      item.classList.remove('is-selected');
+      item.setAttribute('aria-pressed','false');
+    });
+    main.querySelector('[data-action="journal-generate"]').disabled = true;
+    main.querySelector('.journal-path').focus();
   },
   'journal-generate':() => {
+    try {
+      const Audio = window.AudioContext || window.webkitAudioContext;
+      if (Audio) { journalAudio ||= new Audio(); void journalAudio.resume().catch(() => {}); }
+    } catch {}
     if (main.querySelector('.journal-path.is-selected')?.dataset.value === 'images') { active.skippedPoem=true; advance('media'); }
     else void showGenerating('poem');
   },
