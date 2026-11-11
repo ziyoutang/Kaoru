@@ -1539,16 +1539,25 @@ const actions = {
     main.querySelector('.journal-flow-scene').classList.add('path-ready');
     main.querySelector('[data-action="journal-generate"]').disabled = false;
   },
-  'journal-change-path':() => {
-    main.querySelector('.journal-paths').classList.remove('has-choice');
+  'journal-change-path':async () => {
+    const paths = main.querySelector('.journal-paths');
+    if (paths.classList.contains('is-resetting')) return;
+    paths.classList.add('is-resetting');
+    paths.inert = true;
     main.querySelector('.journal-flow-scene').classList.remove('path-ready');
-    main.querySelectorAll('.journal-path').forEach(item => {
+    main.querySelector('[data-action="journal-generate"]').disabled = true;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      await new Promise(resolve => setTimeout(resolve,650));
+    }
+    if (!paths.isConnected) return;
+    paths.classList.remove('has-choice','is-resetting');
+    paths.inert = false;
+    paths.querySelectorAll('.journal-path').forEach(item => {
       item.inert = false;
       item.classList.remove('is-selected');
       item.setAttribute('aria-pressed','false');
     });
-    main.querySelector('[data-action="journal-generate"]').disabled = true;
-    main.querySelector('.journal-path').focus();
+    paths.querySelector('.journal-path').focus({preventScroll:true});
   },
   'journal-generate':() => {
     try {
