@@ -398,14 +398,14 @@ body:has(.entries-home){overflow:hidden;overscroll-behavior:none;background:#fff
 
 .home-orbit{
   --orbit-radius:clamp(90px,28.87cqw,438px);
-  position:absolute;inset:0;z-index:1;perspective:clamp(560px,102cqw,1542px);perspective-origin:50% 49%;
+  position:absolute;inset:0;z-index:1;perspective:clamp(1000px,160cqw,2400px);perspective-origin:50% 49%;
   transition:transform 510ms cubic-bezier(.22,.61,.36,1);
 }
-.home-orbit.is-turning{transform:perspective(1400px) rotateX(7deg) translateY(-4px)}
+.home-orbit.is-turning{transform:perspective(1800px) rotateX(2deg) translateY(-2px)}
 .home-turntable{
   position:absolute;inset:0;transform-style:preserve-3d;
   transform:translateZ(calc(-1 * var(--orbit-radius))) rotateY(var(--home-angle,0deg));
-  transition:transform 1250ms cubic-bezier(.45,0,.18,1);
+  transition:transform 1500ms cubic-bezier(.4,0,.2,1);
 }
 .home-face{
   position:absolute;inset:0;backface-visibility:hidden;
@@ -761,10 +761,6 @@ body:has(#main > .view){
 .sense-artwork{transition:--light-x .85s cubic-bezier(.22,.68,.23,1)}
 @media(prefers-reduced-motion:reduce){.sense-artwork{transition:none}}
 
-@media(min-width:701px){
-  .entries-home:has(.collage-home) .home-next{top:81%}
-  .entries-home:has(.collage-home) .entries-search{top:87%}
-}
 
 .deck-front .deck-action:is([data-action="resume"],[data-action="complete-draft"]){font-size:clamp(12px,1.05cqw,16px)}
 
@@ -1322,3 +1318,11 @@ body:has(.poem-focus) #header{visibility:visible;z-index:20;background:transpare
 }
 
 .upload-types{display:block;margin-top:8px;font:10px/1.4 Lekton,monospace;color:var(--sub);letter-spacing:.02em}
+
+.home-face > .home-panel{transition:opacity 850ms ease-out 300ms,filter .5s ease}
+.home-face[inert] > .home-panel{opacity:0;transition:opacity 650ms ease-in,filter .5s ease}
+.entries-home > .entries-filters{transition:opacity var(--filter-fade) ease,visibility 0s,filter .5s ease}
+@media(prefers-reduced-motion:reduce){.home-face > .home-panel,.home-face[inert] > .home-panel,.entries-home > .entries-filters{transition:none}}
+
+.writing-object-scene > button.writing-object > span{position:relative;top:-44px}
+@media(max-width:650px){.writing-object-scene > button.writing-object > span{top:-26px}}
