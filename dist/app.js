@@ -964,7 +964,7 @@ function renderJournalFlow() {
   const metadataOptions = (field, choices) => {
     const value = active[field] || '';
     const options = value && !choices.includes(value) ? [value,...choices] : choices;
-    return `<div class="metadata-selector"><button type="button" class="metadata-arrow" data-step="-1" aria-label="Previous ${field}">‹</button><div class="metadata-wheel" role="group" aria-label="${field === 'weather' ? 'Weather' : 'Feeling'}" data-metadata="${field}">${['',...options].map(option => `<button type="button" data-value="${esc(option)}" aria-label="${esc(option || 'Not selected')}" title="${esc(option || 'Not selected')}" aria-pressed="${option === value}">${metadataIcons[option] || esc(option) || '—'}</button>`).join('')}</div><button type="button" class="metadata-arrow" data-step="1" aria-label="Next ${field}">›</button></div>`;
+    return `<div class="metadata-selector"><button type="button" class="metadata-arrow" data-step="-1" aria-label="Previous ${field}">‹</button><div class="metadata-wheel" role="group" aria-label="${field === 'weather' ? 'Weather' : 'Feeling'}" data-metadata="${field}">${options.map(option => `<button type="button" data-value="${esc(option)}" aria-label="${esc(option)}" title="${esc(option)}" aria-pressed="${option === value}">${metadataIcons[option] || esc(option)}</button>`).join('')}</div><button type="button" class="metadata-arrow" data-step="1" aria-label="Next ${field}">›</button></div>`;
   };
   main.innerHTML = `<div class="wrap view journal-flow-view">
     ${button('journal-back','Back','link','','back')}
@@ -1000,7 +1000,7 @@ function renderJournalFlow() {
       rememberDraft();
     };
     const position = option => option.offsetLeft - options[0].offsetLeft;
-    wheel.scrollLeft = position(wheel.querySelector('[aria-pressed="true"]'));
+    wheel.scrollLeft = position(wheel.querySelector('[aria-pressed="true"]') || options[0]);
     arrows[0].disabled = options[0].getAttribute('aria-pressed') === 'true';
     arrows[1].disabled = options.at(-1).getAttribute('aria-pressed') === 'true';
     const step = direction => {
