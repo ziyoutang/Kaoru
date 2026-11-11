@@ -248,7 +248,7 @@ function frontSheet(entry) {
     <div class="front-caption"><p>${dateLabel(entry.created)} · ${kind}</p><h2>${esc(title)}</h2></div>
     <div class="front-actions">
       ${draft ? button('resume','Continue Writing','deck-action',entry.id,'arrow') : button('entry','Open entry','deck-action',entry.id,'arrow')}
-      ${draft && canComplete(entry) ? button('complete-draft','Mark as Complete','deck-action',entry.id,'arrow') : ''}
+
     </div>
     ${entry.scent ? scentChip(entry.scent,'front-scent') : ''}
   </article>`;
@@ -284,7 +284,7 @@ function categoryGallery(list, index) {
         <span class="poem-tether"><span class="poem-tag"><span>${title}</span></span></span>
       </span>
     </button>`;
-  }).map((card,i) => mixed ? `<div class="mixed-entry">${card}${list[start+i].status === 'draft' && canComplete(list[start+i]) ? button('complete-draft','Mark as Complete','mixed-complete',list[start+i].id,'arrow') : ''}</div>` : card).join('');
+  }).map((card,i) => mixed ? `<div class="mixed-entry">${card}</div>` : card).join('');
   const pages = `<nav class="category-pages poem-pages" aria-label="${filter} pages">
     ${start > 0 ? iconButton('poem-page','Previous page',list[start-size].id,'back') : ''}
     <span class="entries-status">${start+1}–${Math.min(end,list.length)} of ${list.length}</span>
@@ -955,6 +955,21 @@ async function importChoiceFiles(input) {
   finally { input.disabled=false; input.value=''; }
 }
 
+function setJournalFocus(expanded) {
+  const sheet = main.querySelector('.journal-writing-sheet');
+  if (!sheet) return;
+  const view = sheet.closest('.journal-flow-view');
+  if (view.classList.contains('is-writing-focus') === expanded) return;
+  const before = sheet.getBoundingClientRect();
+  view.classList.toggle('is-writing-focus',expanded);
+  const after = sheet.getBoundingClientRect();
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) sheet.animate([
+    {transform:`translate(${before.left-after.left}px,${before.top-after.top}px) scale(${before.width/after.width},${before.height/after.height})`},
+    {transform:'none'}
+  ],{duration:600,easing:'cubic-bezier(.22,.61,.36,1)'});
+  view.querySelector('.journal-flow-footer').inert = expanded;
+  view.querySelector('.journal-flow-next').inert = expanded;
+}
 function renderJournalFlow() {
   const stage = active.stage;
   const editing = stage === 'poem-edit';
@@ -977,6 +992,7 @@ function renderJournalFlow() {
           <div class="metadata-field"><span>Weather</span>${metadataOptions('weather',['Sunny','Cloudy','Rainy','Snowy','Windy','Foggy','Stormy'])}</div>
           <div class="metadata-field"><span>Feeling</span>${metadataOptions('feeling',['Happy','Calm','Grateful','Excited','Reflective','Tired','Sad','Anxious','Frustrated','Mixed'])}</div>
         </div>
+        <button type="button" class="journal-focus-done" data-action="journal-focus-done">Done writing</button>
         <textarea id="journal" aria-label="Journal content" data-field="journal" maxlength="2400" placeholder="Journal content…">${esc(active.journal)}</textarea>
       </section>` : stage === 'journal-choice' ? `<div class="journal-paths" aria-label="Choose what to create">
         <button class="journal-path is-selected" data-action="journal-path" data-value="poem" aria-pressed="true">Generate<br>poem?</button>
@@ -988,8 +1004,8 @@ function renderJournalFlow() {
       </div>
     </div>
     <div class="journal-flow-footer"><div class="journal-save-options">
-      <button type="button" class="journal-save-final" data-action="${poem ? 'save-poem' : 'save-note'}"><span>${poem ? 'Save poem' : 'Save journal'}</span><small>Finish this page</small></button>
-      <button type="button" class="journal-save-draft" data-action="save-draft"><span>Save draft & exit</span><small>Continue writing later</small></button>
+      <button type="button" class="journal-save-final" data-action="${poem ? 'save-poem' : 'save-note'}"><span>${poem ? 'Save poem' : 'Save journal'}</span></button>
+      <button type="button" class="journal-save-draft" data-action="save-draft"><span>Save draft & exit</span></button>
     </div></div>
   </div>`;
   main.querySelectorAll('.metadata-wheel').forEach(wheel => {
@@ -1411,6 +1427,7 @@ const actions = {
     document.querySelector('#scent').value = value;
     rememberDraft();
   },
+  'journal-focus-done':() => { setJournalFocus(false); main.querySelector('#journal')?.focus({preventScroll:true}); },
   'journal-back':() => { advance(({start:'choose','journal-choice':'start',poem:'journal-choice','poem-edit':'poem'})[active.stage] || 'start'); },
   'journal-next':() => { if (requireText('journal','Write a few words first.')) advance('journal-choice'); },
   'journal-path':value => {
@@ -1490,6 +1507,7 @@ document.addEventListener('click', event => {
   else render(true);
 });
 document.addEventListener('input', event => {
+  if (event.target.id === 'journal' && event.target.closest('.journal-writing-sheet')) setJournalFocus(true);
   if (event.target.matches('.journal-writing-sheet textarea') && !event.isComposing && event.inputType === 'insertText' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     event.target.getAnimations().forEach(animation => animation.cancel());
     event.target.animate([{transform:'translateY(.7px)'},{transform:'translateY(0)'}],{duration:130,easing:'ease-out'});
@@ -1540,6 +1558,7 @@ document.addEventListener('submit', event => {
 });
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape') {
+    setJournalFocus(false);
     const piece = selectScenePiece(null);
     if (piece) piece.querySelector('.scene-piece-trigger').focus({preventScroll:true});
   }
