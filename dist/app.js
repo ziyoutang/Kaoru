@@ -1020,7 +1020,7 @@ function renderJournalFlow() {
     const options = value && !choices.includes(value) ? [value,...choices] : choices;
     return `<div class="metadata-selector"><button type="button" class="metadata-arrow" data-step="-1" aria-label="Previous ${field}">‹</button><div class="metadata-wheel" role="group" aria-label="${field === 'weather' ? 'Weather' : 'Feeling'}" data-metadata="${field}">${options.map(option => `<button type="button" data-value="${esc(option)}" aria-label="${esc(option)}" title="${esc(option)}" aria-pressed="${option === value}">${metadataIcons[option] || esc(option)}</button>`).join('')}</div><button type="button" class="metadata-arrow" data-step="1" aria-label="Next ${field}">›</button></div>`;
   };
-  main.innerHTML = `<div class="wrap view journal-flow-view">
+  main.innerHTML = `<div class="wrap view journal-flow-view${stage === 'poem' ? ' poem-focus is-revealing' : ''}">
     <div class="journal-objects" aria-hidden="true"></div>
     ${button('journal-back','Back','link','','back')}
     <div class="journal-flow-scene">
@@ -1087,13 +1087,15 @@ function renderJournalFlow() {
   });
   if (stage === 'poem') {
     const output = main.querySelector('.poem-reveal'), text = active.poem;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { output.textContent = text; return; }
+    const finish = () => output.closest('.poem-focus').classList.remove('is-revealing');
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { output.textContent = text; finish(); return; }
     const start = performance.now();
     const reveal = time => {
       if (!output.isConnected) return;
       const count = Math.floor((time-start)/24);
       output.textContent = text.slice(0,count);
       if (count < text.length) requestAnimationFrame(reveal);
+      else finish();
     };
     requestAnimationFrame(reveal);
   }
@@ -1103,7 +1105,7 @@ async function showGenerating(kind) {
   const words = [target.scent,...(target.journal+' '+target.prompt+' '+target.poem).match(/[a-zA-Z]{4,}/g) || []]
     .filter(word => word && !/^(this|that|with|from|have|were|there|then|when)$/i.test(word));
   const keywords = [...new Set(words.map(word=>word.toLowerCase()))].slice(0,3);
-  main.innerHTML = `<div class="wrap view generating-view" aria-busy="true">
+  main.innerHTML = `<div class="wrap view generating-view${kind === 'poem' ? ' generation-focus' : ''}" aria-busy="true">
     <div class="generation-orb" aria-hidden="true">${keywords.map((word,i)=>`<span class="generation-keyword keyword-${i}">${esc(word)}</span>`).join('')}</div>
     <h1 role="status">Generating…</h1><p class="demo-note">${kind === 'poem' ? 'Creating a sample poem' : 'Preparing sample images'}</p>
   </div>`;

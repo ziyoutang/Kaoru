@@ -1195,3 +1195,19 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 @keyframes journal-object-float{0%,100%{translate:0 0}50%{translate:0 -7px}}
 @media(max-width:850px){.journal-object{width:6vw}.journal-object canvas{height:8vw}.journal-object small{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.journal-object,.journal-object canvas{animation:none}}
+
+body:has(.generation-focus) #header,body:has(.generation-focus) .light-switch,body:has(.poem-focus) #header,body:has(.poem-focus) .light-switch{visibility:hidden}
+#main > .generation-focus,#main > .poem-focus{position:fixed;inset:0;width:100%;height:100dvh;margin:0;padding:32px;display:flex;align-items:center;justify-content:center;background:var(--paper);animation:poem-focus-in .7s ease both}
+.generation-focus .generation-orb{width:min(42dvh,340px);margin:0 auto 32px}
+.generation-focus h1{margin:0}
+.generation-focus .demo-note{font-size:11px;color:var(--sub)}
+.poem-focus .journal-flow-scene{display:flex;flex:0;width:min(680px,80vw);padding:0;justify-content:center}
+.poem-focus .journal-flow-scene > h1{display:none}
+.poem-focus .journal-poem-preview{width:100%;height:auto;max-height:65dvh;justify-content:center}
+.poem-focus .poem-reveal{font-size:clamp(18px,2vw,26px);line-height:1.9;margin:0;max-height:65dvh}
+.poem-focus > .btn{position:absolute;top:32px;left:50%;translate:-50% 0}
+.poem-focus .journal-flow-next{position:absolute;right:6vw;top:50%}
+.poem-focus .journal-flow-footer{position:absolute;bottom:32px;left:0}
+.poem-focus.is-revealing > .btn,.poem-focus.is-revealing .journal-flow-next,.poem-focus.is-revealing .journal-flow-footer{visibility:hidden;opacity:0;pointer-events:none}
+@keyframes poem-focus-in{from{opacity:0;scale:.97}to{opacity:1;scale:1}}
+@media(prefers-reduced-motion:reduce){#main > .generation-focus,#main > .poem-focus{animation:none}}
