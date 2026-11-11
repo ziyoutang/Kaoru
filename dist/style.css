@@ -1259,3 +1259,5 @@ body:has(.poem-focus) #header{visibility:visible;z-index:20;background:transpare
 
 .is-writing-focus .journal-focus-done{position:fixed;z-index:30;right:max(calc((100vw - 680px)/2 + 24px),calc(8vw + 24px));bottom:24px;padding:10px 14px;border-radius:20px;background:#f3efe7ed;box-shadow:0 3px 14px #28335118;backdrop-filter:blur(8px)}
 .is-writing-focus .journal-focus-done:hover{background:#e6eaf2;color:#283351}
+
+.entries-home:has(.face-senses[aria-hidden="false"]) > .home-next{margin-top:clamp(16px,3.4dvh,24px)}
