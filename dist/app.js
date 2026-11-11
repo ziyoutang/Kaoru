@@ -475,8 +475,30 @@ function selectHomeView(index) {
 }
 function selectSense(key) {
   homeSense = homeSense === key ? '' : key;
+  const panel = document.querySelector('.face-senses .home-panel');
+  panel.classList.toggle('is-browsing-sense',Boolean(homeSense));
+  panel.querySelectorAll('.sense-tile').forEach(tile => {
+    const selected = tile.dataset.value === homeSense;
+    tile.setAttribute('aria-pressed',String(selected));
+    tile.inert = Boolean(homeSense) && !selected;
+  });
+  let collection = panel.querySelector('.home-sense-collection');
+  if (!collection) {
+    collection = document.createElement('section');
+    collection.className = 'home-sense-collection';
+    panel.append(collection);
+  }
+  collection.inert = !homeSense;
+  if (homeSense) {
+    const notes = senseRecords().filter(note => (note.types || [note.type]).includes(homeSense));
+    collection.innerHTML = `${button('close-sense-collection','All senses','link','','back')}
+      <h2>${senses[homeSense][0]} collection</h2>
+      <div class="home-sense-list" tabindex="0" role="region" aria-label="Saved ${senses[homeSense][0].toLowerCase()} senses">
+      ${notes.length ? notes.map(note => `<a class="home-sense-item" href="${route('captured',note.id)}"><span class="home-sense-object"><canvas class="sense-model" data-sense-model="${memoryObject(note)}" aria-hidden="true"></canvas></span><span>${esc(note.name)}</span></a>`).join('') : '<p>No saved senses in this collection yet.</p>'}
+      </div>`;
+    window.KaoruSenses.mount(collection);
+  }
   const prompt = senses[homeSense]?.[1];
-  document.querySelectorAll('.sense-tile').forEach(tile => tile.setAttribute('aria-pressed',String(tile.dataset.value === homeSense)));
   document.querySelector('#sense-status').textContent = prompt || 'Drag to rotate · tap to select';
   document.querySelector('#create-instruction').textContent = prompt || 'Start with a journal, a poem, or an image.';
 }
@@ -617,10 +639,11 @@ function updateCaptureModels() {
   document.querySelector('#capture-detected').textContent = types.length ? 'Senses noticed: ' + types.map(type => senses[type][0]).join(', ') : '';
   if (types.length) window.KaoruSenses.mount(container);
 }
-function senseArtwork(types) {
+function senseArtwork(types, note) {
   types = [...new Set(types)].filter(type => Object.hasOwn(senses,type));
+  const models = note ? [{key:memoryObject(note),label:note.name}] : types.map(type => ({key:type,label:senses[type][0]}));
   return `<div class="sense-artwork" data-types="${types.join(',')}" tabindex="0" role="group" aria-label="Sensory sphere. Scroll sideways, drag, or use left and right arrow keys to browse its sense models.">
-    <div class="sense-orbit">${types.map((type,index) => `<div class="sense-orbit-anchor" style="--slot:${index * 360 / types.length}deg"><span class="sense-orbit-model" role="img" aria-label="${senses[type][0]}"><canvas class="sense-model" data-sense-model="${type}" aria-hidden="true"></canvas></span></div>`).join('')}</div>
+    <div class="sense-orbit">${models.map((model,index) => `<div class="sense-orbit-anchor" style="--slot:${index * 360 / models.length}deg"><span class="sense-orbit-model" role="img" aria-label="${esc(model.label)}"><canvas class="sense-model" data-sense-model="${model.key}" aria-hidden="true"></canvas></span></div>`).join('')}</div>
   </div>`;
 }
 function renderSenseNaming() {
@@ -657,7 +680,7 @@ function renderCaptured(id) {
   const note = senseRecords().find(item => item.id === id);
   main.innerHTML = `<div class="wrap view choice-view sense-result-view" data-node-id="24:457">
     ${backLink('#sense-select','Back to Sense Selection')}
-    ${note ? `${senseArtwork(note.types || [note.type])}
+    ${note ? `${senseArtwork(note.types || [note.type],note)}
       <div class="captured-sense"><h1>${note.detail ? 'Senses captured.' : 'Sense ready.'}</h1><p class="captured-sense-name">${esc(note.name)}</p>
         ${note.detail ? `<p>${esc(note.detail)}</p>` : ''}
         ${note.memoryId ? `<a href="${route('entry',note.memoryId)}" class="btn link">Open linked memory ${icon('arrow')}</a>` : ''}
@@ -742,18 +765,6 @@ function field(name,label,value,{placeholder='',hint='',area=false,tall=false,ma
     ${area ? `<textarea ${attr}${tall ? ' class="tall"' : ''}>${esc(value)}</textarea>` : `<input ${attr} value="${esc(value)}">`}
     ${hint ? `<p class="field-help" id="${name}-help">${esc(hint)}</p>` : ''}</div>`;
 }
-function captureFields() {
-  const labels = allScents();
-  return `<fieldset>
-    <legend class="eyebrow" style="margin-bottom:8px">Scent · Optional</legend>
-    <div class="field"><label for="scent">What did it smell like?</label>
-      <input id="scent" data-field="scent" maxlength="55" value="${esc(active.scent)}" list="saved-scents" placeholder="Orange peel, wet pavement, cedar…">
-      <datalist id="saved-scents">${labels.map(item => `<option value="${esc(item.label)}"></option>`).join('')}</datalist>
-    </div>
-    ${labels.length ? `<div class="actions" style="margin-bottom:11px">${labels.slice(0,4).map(item => button('choose-scent',item.label,'ghost',item.label,'scent')).join('')}</div>` : ''}
-    ${field('smell','Scent detail',active.smell,{placeholder:'Orange peel on my fingers while unpacking',hint:'Use your own words. The short scent name above links this page to others.',max:220})}
-  </fieldset>`;
-}
 function startPanel() {
   const [label,,key] = modes[active.mode];
   const prompts = {journal:senses[active.sense]?.[1] || 'What do you want to remember?',poem:'Write or paste your lines…',images:'Warm window light, a box on the floor, a quiet room…'};
@@ -764,8 +775,6 @@ function startPanel() {
     ${field(key,active.mode === 'images' ? 'Image prompt' : label,active[key],{placeholder:prompts[active.mode],area:true,tall:true})}
     ${active.mode !== 'images' ? `<label class="flow-import">${icon('up')}<span>Import a text file</span><input id="import-writing" type="file" accept=".txt,.md,text/plain,text/markdown"></label>` : ''}
     ${active.senseDetail ? `<p class="sense-carry">${esc(active.senseDetail)}</p>` : ''}
-    <hr class="separation">
-    ${captureFields()}
     <div class="editor-actions">
       ${button('save-draft','Save & exit','ghost')}
       <div class="actions">
@@ -1470,6 +1479,7 @@ const actions = {
   'home-view':value => selectHomeView(Number(value)),
   'home-turn':value => rotateHome(Number(value)),
   'pick-sense':selectSense,
+  'close-sense-collection':() => { const key = homeSense; selectSense(''); document.querySelector(`.sense-tile[data-value="${key}"]`)?.focus({preventScroll:true}); },
   'new-from-sense':() => go('create',homeSense),
   'new-scent':scent => newDraft({scent}),
   filter:value => {
@@ -1676,12 +1686,12 @@ document.addEventListener('keydown', event => {
   if (!document.querySelector('.home-turntable') || event.defaultPrevented ||
       event.altKey || event.metaKey || event.ctrlKey ||
       !['ArrowLeft','ArrowRight'].includes(event.key) ||
-      event.target.closest?.('input, textarea, [contenteditable]')) return;
+      event.target.closest?.('input, textarea, [contenteditable], .home-sense-collection')) return;
   event.preventDefault();
   if (!event.repeat) rotateHome(event.key === 'ArrowLeft' ? -1 : 1);
 });
 document.addEventListener('wheel', event => {
-  if (!event.target.closest('.entries-home') || event.ctrlKey) return;
+  if (!event.target.closest('.entries-home') || event.target.closest('.home-sense-collection') || event.ctrlKey) return;
   const horizontal = event.shiftKey && Math.abs(event.deltaX) < 1 ? event.deltaY : event.deltaX;
   if (!horizontal || (!event.shiftKey && Math.abs(horizontal) <= Math.abs(event.deltaY))) return;
   event.preventDefault();
@@ -1697,7 +1707,7 @@ document.addEventListener('wheel', event => {
 },{passive:false});
 document.addEventListener('touchstart', event => {
   swipeOrigin = event.target.closest('.entries-home') &&
-    !event.target.closest('.entries-search, .sense-tile, .scene-piece') &&
+    !event.target.closest('.entries-search, .sense-tile, .scene-piece, .home-sense-collection') &&
     event.touches.length === 1 ? event.touches[0] : null;
 },{passive:true});
 document.addEventListener('touchend', event => {
