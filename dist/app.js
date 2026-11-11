@@ -987,7 +987,10 @@ function renderJournalFlow() {
         ${iconButton(stage === 'start' ? 'journal-next' : stage === 'journal-choice' ? 'journal-generate' : 'approve-poem','Continue','','arrow')}
       </div>
     </div>
-    <div class="journal-flow-footer">${button('save-draft','Save & exit','link')}${poem ? button('save-poem','Save poem','link') : button('save-note','Save journal','link')}</div>
+    <div class="journal-flow-footer"><div class="journal-save-options">
+      <button type="button" class="journal-save-final" data-action="${poem ? 'save-poem' : 'save-note'}"><span>${poem ? 'Save poem' : 'Save journal'}</span><small>Finish this page</small></button>
+      <button type="button" class="journal-save-draft" data-action="save-draft"><span>Save draft & exit</span><small>Continue writing later</small></button>
+    </div></div>
   </div>`;
   main.querySelectorAll('.metadata-wheel').forEach(wheel => {
     const options = [...wheel.children];

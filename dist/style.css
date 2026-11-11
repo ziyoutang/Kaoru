@@ -1144,3 +1144,13 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 .journal-metadata > label{align-content:start}
 .journal-metadata input[type="date"]{height:40px;box-sizing:border-box}
 .journal-metadata .metadata-field > span{display:block;line-height:16px}
+
+.journal-flow-view .journal-flow-footer{display:grid;grid-template-columns:120px minmax(0,540px) 44px;gap:clamp(16px,2.5vw,32px);justify-content:center;width:100%}
+.journal-save-options{grid-column:2;display:flex;align-items:center;gap:20px;justify-content:flex-start}
+.journal-save-options button{padding:8px 12px;border:1px solid transparent;border-radius:3px;background:none;color:var(--navy);text-align:left;cursor:pointer}
+.journal-save-options .journal-save-final{border-color:#7c8fab80;background:#7c8fab0d}
+.journal-save-options span{display:block;font:400 14px/1.3 Lekton,monospace}
+.journal-save-options small{display:block;margin-top:3px;font:400 10px/1.3 Inter,sans-serif;color:var(--sub)}
+.journal-save-options button:hover{background:#7c8fab20}
+.journal-save-options button:focus-visible{outline:1px solid #7c8fab;outline-offset:3px}
+@media(max-width:700px){.journal-flow-view .journal-flow-footer{grid-template-columns:minmax(0,1fr) 44px;gap:14px}.journal-save-options{grid-column:1;gap:8px}.journal-save-options button{padding:7px}}
