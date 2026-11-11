@@ -1155,7 +1155,7 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 @media(max-width:700px){.journal-flow-view .journal-flow-footer{grid-template-columns:minmax(0,1fr) 44px;gap:14px}.journal-save-options{grid-column:1;gap:8px}.journal-save-options button{padding:7px}}
 
 .journal-focus-done{display:none}
-.journal-writing-sheet{transform-origin:top left}
+.journal-writing-sheet{transform-origin:top left;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22180%22%20height%3D%22180%22%3E%3Cfilter%20id%3D%22paper%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.72%22%20numOctaves%3D%223%22%20stitchTiles%3D%22stitch%22%2F%3E%3CfeColorMatrix%20type%3D%22saturate%22%20values%3D%220%22%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20opacity%3D%22.055%22%20filter%3D%22url%28%23paper%29%22%2F%3E%3C%2Fsvg%3E")}
 .journal-flow-view.is-writing-focus .journal-writing-sheet{position:relative;width:min(680px,84vw);height:120dvh;margin:0 auto;box-sizing:border-box;box-shadow:5px 10px 28px #26262622}
 .is-writing-focus .journal-focus-done{display:block;position:absolute;right:24px;bottom:16px;border:0;background:none;color:#485e91;font:400 13px Lekton,monospace;cursor:pointer}
 .is-writing-focus .journal-writing-sheet textarea{margin-bottom:24px}
@@ -1163,6 +1163,6 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 .is-writing-focus .journal-flow-scene h1,.is-writing-focus .journal-flow-next,.is-writing-focus .journal-flow-footer{opacity:0;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.journal-flow-scene h1,.journal-flow-next,.journal-flow-footer{transition:none}}
 
-#main > .journal-flow-view.is-writing-focus{position:fixed;z-index:10;inset:22dvh 0 0;width:100%;height:auto;margin:0;padding:0;overflow-y:auto}
+#main > .journal-flow-view.is-writing-focus{position:fixed;z-index:10;inset:calc(22dvh + 24px) 0 0;width:100%;height:auto;margin:0;padding:0;overflow-y:auto}
 .is-writing-focus .journal-flow-scene{display:block;padding:0 0 40px}
 .is-writing-focus > .back,.is-writing-focus > button,.is-writing-focus .journal-flow-scene h1,.is-writing-focus .journal-flow-next,.is-writing-focus .journal-flow-footer{display:none}
