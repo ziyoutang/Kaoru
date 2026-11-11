@@ -353,13 +353,52 @@ async function selectDeckEntry(id) {
   deck.focus({preventScroll:true});
 }
 const homeViews = ['Entries','Senses','Create New'];
-const homeMotifs = `
-  <img class="home-motif motif-taste" src="assets/entries/citrus-slice.svg" width="130" height="130" alt="">
-  <img class="home-motif motif-smell" src="assets/entries/scent-wisps.svg" width="106" height="108" alt="">
-  <img class="home-motif motif-touch" src="assets/entries/fingerprint.svg" width="146" height="145" alt="">
-  <img class="home-motif motif-lavender" src="assets/entries/lavender.svg" width="98" height="116" alt="">
-  <img class="home-motif motif-hearing" src="assets/entries/sound-ripples.svg" width="108" height="80" alt="">
-  <img class="home-motif motif-sight" src="assets/entries/prism.svg" width="109" height="85" alt="">`;
+const sensoryMoments = [
+  {place:'taste',model:'citrus',name:'Orange peel',lines:['An orange opens with a bright sting, leaving its oil on my fingertips.','The first bite is sharp and sweet, like sunlight held under the skin.']},
+  {place:'smell',model:'cup',name:'Morning tea',lines:['Steam rises from the cup, carrying the green, grassy scent of tea.','The warm ceramic settles into my palms before the first sip.']},
+  {place:'touch',model:'fabric',name:'Soft linen',lines:['The linen is cool at first, then slowly takes the warmth of my hand.','A loose thread catches my finger along the softened edge.']},
+  {place:'lavender',model:'flower',name:'Garden flowers',lines:['A brushed stem releases a quiet floral scent into the evening air.','Small petals hold the last light, their edges almost translucent.']},
+  {place:'hearing',model:'pavement',name:'Rain on stone',lines:['Rain taps the pavement in uneven rhythms, then gathers into a hush.','The street smells of wet stone long after the clouds have passed.']},
+  {place:'sight',model:'candle',name:'Candlelight',lines:['The flame bends toward the window, turning the wall a soft amber.','A small pool of wax catches the light like still water.']}
+];
+const homeMotifs = sensoryMoments.map((moment,i) => `<div class="home-motif motif-${moment.place}" data-moment="${i}">
+  <button class="motif-object" type="button" aria-label="Explore ${moment.name}" aria-expanded="false"><canvas class="sense-model" data-sense-model="${moment.model}" aria-hidden="true"></canvas></button>
+  <div class="motif-reading" hidden><strong>${moment.name}</strong><p aria-live="polite">${moment.lines[0]}</p><div class="motif-reading-nav"><button type="button" data-direction="-1" aria-label="Previous description">←</button><span>1 / ${moment.lines.length}</span><button type="button" data-direction="1" aria-label="Next description">→</button></div></div>
+</div>`).join('');
+function bindSensoryMoments() {
+  main.querySelectorAll('[data-moment]').forEach(motif => {
+    const moment = sensoryMoments[Number(motif.dataset.moment)];
+    const trigger = motif.querySelector('.motif-object');
+    const reading = motif.querySelector('.motif-reading');
+    let index = 0, lastScroll = 0;
+    const open = value => {
+      reading.hidden = !value;
+      trigger.setAttribute('aria-expanded',String(value));
+      motif.classList.toggle('is-reading',value);
+    };
+    const browse = direction => {
+      index = (index + direction + moment.lines.length) % moment.lines.length;
+      reading.querySelector('p').textContent = moment.lines[index];
+      reading.querySelector('.motif-reading-nav span').textContent = `${index + 1} / ${moment.lines.length}`;
+    };
+    motif.addEventListener('pointerenter',() => open(true));
+    motif.addEventListener('pointerleave',() => { if (!motif.contains(document.activeElement)) open(false); });
+    motif.addEventListener('focusin',() => open(true));
+    motif.addEventListener('focusout',event => { if (!motif.contains(event.relatedTarget)) open(false); });
+    trigger.addEventListener('click',() => open(true));
+    reading.querySelectorAll('[data-direction]').forEach(button => button.addEventListener('click',() => browse(Number(button.dataset.direction))));
+    motif.addEventListener('keydown',event => {
+      if (event.key === 'Escape') { open(false); trigger.focus(); }
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault();event.stopPropagation();browse(event.key === 'ArrowLeft' ? -1 : 1); }
+    });
+    motif.addEventListener('wheel',event => {
+      event.preventDefault();event.stopPropagation();
+      if (performance.now() - lastScroll < 450) return;
+      const delta = event.deltaY || event.deltaX;
+      if (delta) { browse(Math.sign(delta)); lastScroll = performance.now(); }
+    },{passive:false});
+  });
+}
 const senses = {
   eyes:['Sight','What caught your eye?'],
   ears:['Hearing','What could you hear?'],
@@ -423,6 +462,8 @@ function renderDiary() {
     <p id="home-announcement" class="entries-status" role="status"></p>
   </section>`;
   renderEntries();
+  bindSensoryMoments();
+  window.KaoruSenses.mount(main.querySelector('.face-entries'));
 }
 function setSearchExpanded(form, expanded) {
   form.classList.toggle('is-expanded',expanded);
@@ -460,8 +501,8 @@ function rotateHome(direction) {
   });
   document.querySelector('.entries-filters').inert = index !== 0;
   document.querySelector('.sense-caption').hidden = index !== 1;
-  if (index === 1) {
-    const face = document.querySelector('.face-senses');
+  {
+    const face = turntable.querySelectorAll('.home-face')[index];
     requestAnimationFrame(() => {
       if (face.isConnected && !face.inert) window.KaoruSenses.mount(face);
     });
@@ -1695,12 +1736,12 @@ document.addEventListener('keydown', event => {
   if (!document.querySelector('.home-turntable') || event.defaultPrevented ||
       event.altKey || event.metaKey || event.ctrlKey ||
       !['ArrowLeft','ArrowRight'].includes(event.key) ||
-      event.target.closest?.('input, textarea, [contenteditable], .home-sense-collection')) return;
+      event.target.closest?.('input, textarea, [contenteditable], .home-sense-collection, .home-motif')) return;
   event.preventDefault();
   if (!event.repeat) rotateHome(event.key === 'ArrowLeft' ? -1 : 1);
 });
 document.addEventListener('wheel', event => {
-  if (!event.target.closest('.entries-home') || event.target.closest('.home-sense-collection') || event.ctrlKey) return;
+  if (!event.target.closest('.entries-home') || event.target.closest('.home-sense-collection, .home-motif') || event.ctrlKey) return;
   const horizontal = event.shiftKey && Math.abs(event.deltaX) < 1 ? event.deltaY : event.deltaX;
   if (!horizontal || (!event.shiftKey && Math.abs(horizontal) <= Math.abs(event.deltaY))) return;
   event.preventDefault();
@@ -1716,7 +1757,7 @@ document.addEventListener('wheel', event => {
 },{passive:false});
 document.addEventListener('touchstart', event => {
   swipeOrigin = event.target.closest('.entries-home') &&
-    !event.target.closest('.entries-search, .sense-tile, .scene-piece, .home-sense-collection') &&
+    !event.target.closest('.entries-search, .sense-tile, .scene-piece, .home-sense-collection, .home-motif') &&
     event.touches.length === 1 ? event.touches[0] : null;
 },{passive:true});
 document.addEventListener('touchend', event => {

@@ -1270,3 +1270,21 @@ body:has(.poem-focus) #header{visibility:visible;z-index:20;background:transpare
 @media(prefers-reduced-motion:reduce){.journal-paths.has-choice.is-resetting .journal-path-detail{transition:none}}
 .journal-flow-scene:has(.journal-paths) > .journal-flow-next{translate:-40px 0}
 @media(max-width:700px){.journal-flow-scene:has(.journal-paths) > .journal-flow-next{translate:0}}
+
+/* Small sensory still lifes open into browsable writing prompts. */
+.home-motif{z-index:3;pointer-events:auto;aspect-ratio:1;opacity:.85}
+.motif-object{display:block;width:100%;height:100%;padding:0;border:0;background:none;cursor:pointer;color:inherit}
+.motif-object .sense-model{width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 5px 5px #28335125)}
+.home-motif.is-reading{z-index:20;opacity:1;animation-play-state:paused}
+.motif-object:focus-visible{outline:1px solid #7184a4;outline-offset:5px;border-radius:50%}
+.motif-reading{position:absolute;top:90%;left:0;width:230px;padding:16px 18px;background:var(--paper,#f4f0e8);color:var(--navy);border-radius:3px;box-shadow:0 8px 24px #2833511c;font:13px/1.6 Lekton,monospace;cursor:default}
+.motif-reading[hidden]{display:none}
+.motif-reading strong{font-weight:400;font-size:14px}
+.motif-reading p{margin:8px 0 12px;min-height:64px}
+.motif-reading-nav{display:flex;justify-content:space-between;align-items:center}
+.motif-reading-nav button{border:0;background:none;color:inherit;padding:5px 10px;cursor:pointer}
+.motif-reading-nav span{font-size:11px;opacity:.65}
+.motif-touch .motif-reading,.motif-smell .motif-reading,.motif-sight .motif-reading{left:auto;right:0}
+.motif-taste .motif-reading,.motif-sight .motif-reading,.motif-hearing .motif-reading,.motif-touch .motif-reading{top:auto;bottom:90%}
+[data-theme=dark] .motif-reading{background:#283149;color:#ece6dc}
+@media(max-width:650px){.motif-reading{width:180px;padding:12px;font-size:12px}}

@@ -360,6 +360,7 @@ window.KaoruSenses = (() => {
     }
   }
   function mount(face) {
+    face = face.closest('.home-face') || face;
     if (renderModel === undefined) renderModel=createRenderer();
     if (!renderModel) { face.classList.add('no-sense-models'); return; }
     activeFace=face;
