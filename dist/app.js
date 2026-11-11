@@ -363,7 +363,7 @@ const sensoryMoments = [
 ];
 const homeMotifs = sensoryMoments.map((moment,i) => `<div class="home-motif motif-${moment.place}" data-moment="${i}">
   <button class="motif-object" type="button" aria-label="Explore ${moment.name}" aria-expanded="false"><canvas class="sense-model" data-sense-model="${moment.model}" aria-hidden="true"></canvas></button>
-  <div class="motif-reading" hidden><strong>${moment.name}</strong><p aria-live="polite">${moment.lines[0]}</p><div class="motif-reading-nav"><button type="button" data-direction="-1" aria-label="Previous description">←</button><span>1 / ${moment.lines.length}</span><button type="button" data-direction="1" aria-label="Next description">→</button></div></div>
+  <div class="motif-reading" hidden inert><strong>${moment.name}</strong><p aria-live="polite">${moment.lines[0]}</p><div class="motif-reading-nav"><button type="button" data-direction="-1" aria-label="Previous description">←</button><span>1 / ${moment.lines.length}</span><button type="button" data-direction="1" aria-label="Next description">→</button></div></div>
 </div>`).join('');
 function bindSensoryMoments() {
   main.querySelectorAll('[data-moment]').forEach(motif => {
@@ -373,6 +373,7 @@ function bindSensoryMoments() {
     let index = 0, lastScroll = 0;
     const open = value => {
       reading.hidden = !value;
+      reading.inert = !value;
       trigger.setAttribute('aria-expanded',String(value));
       motif.classList.toggle('is-reading',value);
     };
@@ -463,6 +464,22 @@ function renderDiary() {
   </section>`;
   renderEntries();
   bindSensoryMoments();
+  const categoryMenu = main.querySelector('.entries-filters');
+  let categoryScroll = 0, categoryScrolledAt = 0;
+  categoryMenu.addEventListener('wheel',event => {
+    if (event.ctrlKey || categoryMenu.inert) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const now = performance.now();
+    if (now - categoryScrolledAt < 500) return;
+    categoryScroll += event.deltaY || event.deltaX;
+    if (Math.abs(categoryScroll) < 35) return;
+    const categories = ['All','Collages','Recent','Journal','Poems'];
+    const next = Math.max(0,Math.min(categories.length - 1,categories.indexOf(filter) + Math.sign(categoryScroll)));
+    categoryScroll = 0;
+    categoryScrolledAt = now;
+    if (categories[next] !== filter) actions.filter(categories[next]);
+  },{passive:false});
   window.KaoruSenses.mount(main.querySelector('.face-entries'));
 }
 function setSearchExpanded(form, expanded) {
@@ -905,7 +922,7 @@ function renderWritingChoice() {
     <div class="writing-object-scene${uploading && !files.length ? ' upload-centered' : ''}">
       <h1>${label}</h1>
       ${uploading ? '' : `<button class="writing-object" data-action="writing-prompt"><canvas class="sense-model" data-sense-model="typewriter" aria-hidden="true"></canvas><span>Write Prompt</span></button>`}
-      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><input aria-label="Upload files" id="choice-upload" type="file" ${active.mode === 'journal' ? `accept="${journalFileExtensions.map(ext=>`.${ext}`).join(',')}"` : ''} multiple></label><span>Upload</span></div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload</span></button>`}
+      ${uploading ? `<div class="writing-object upload-object"><label class="upload-model"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><input aria-label="Upload files" id="choice-upload" type="file" ${active.mode === 'journal' ? `accept="${journalFileExtensions.map(ext=>`.${ext}`).join(',')}"` : ''} multiple></label><span>Upload${active.mode === 'journal' ? '<small class="upload-types">TXT · MD · DOC · DOCX · RTF · ODT</small>' : ''}</span></div>` : `<button class="writing-object" data-action="writing-upload"><canvas class="sense-model" data-sense-model="folder" aria-hidden="true"></canvas><span>Upload${active.mode === 'journal' ? '<small class="upload-types">TXT · MD · DOC · DOCX · RTF · ODT</small>' : ''}</span></button>`}
       ${uploading && files.length ? `<div class="imported-papers" role="region" tabindex="0" aria-label="Uploaded file previews. Scroll to browse.">${files.map(file=>`<article class="imported-paper">${file.src ? `<img src="${esc(file.src)}" alt="${esc(file.name)}">` : `<p>${esc(file.preview || 'Original file attached.')}</p>`}<span>${esc(file.name)}</span></article>`).join('')}</div>` : ''}
     </div>
     ${uploading ? `<button class="btn flow-continue" data-action="writing-open" ${files.length ? '' : 'disabled'}>Continue ${icon('arrow')}</button>` : ''}

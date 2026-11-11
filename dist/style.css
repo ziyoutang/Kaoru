@@ -1274,11 +1274,17 @@ body:has(.poem-focus) #header{visibility:visible;z-index:20;background:transpare
 /* Small sensory still lifes open into browsable writing prompts. */
 .home-motif{z-index:3;pointer-events:auto;aspect-ratio:1;opacity:.85}
 .motif-object{display:block;width:100%;height:100%;padding:0;border:0;background:none;cursor:pointer;color:inherit}
-.motif-object .sense-model{width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 5px 5px #28335125)}
+.motif-object .sense-model{width:100%;height:100%;pointer-events:none;filter:brightness(1.2) saturate(.7) drop-shadow(0 5px 5px #28335125)}
 .home-motif.is-reading{z-index:20;opacity:1;animation-play-state:paused}
 .motif-object:focus-visible{outline:1px solid #7184a4;outline-offset:5px;border-radius:50%}
-.motif-reading{position:absolute;top:90%;left:0;width:230px;padding:16px 18px;background:var(--paper,#f4f0e8);color:var(--navy);border-radius:3px;box-shadow:0 8px 24px #2833511c;font:13px/1.6 Lekton,monospace;cursor:default}
-.motif-reading[hidden]{display:none}
+.motif-reading{position:absolute;top:90%;left:0;width:230px;padding:16px 18px;background:var(--paper,#f4f0e8);color:var(--navy);border-radius:3px;box-shadow:0 8px 26px #ca865438,0 2px 8px #d89b6120;font:13px/1.6 Lekton,monospace;cursor:default}
+.motif-reading{opacity:1;visibility:visible;transform:translateY(0) scale(1);transform-origin:center;transition:opacity 1.1s ease,transform 1.1s cubic-bezier(.22,1,.36,1),visibility 0s}
+.motif-reading[hidden]{display:block;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(12px) scale(.96);transition:opacity .35s ease,transform .35s ease,visibility 0s .35s}
+.entries-home > .entries-logo,.entries-home > .entries-filters,.entries-home > .sense-caption,.entries-home > .home-next,.entries-home > .entries-search,.home-face > .home-panel,.home-face > .home-motif{transition:filter .5s ease}
+.entries-home:has(.home-face:not([aria-hidden="true"]) .is-reading) > :is(.entries-logo,.entries-filters,.sense-caption,.home-next,.entries-search),
+.home-face:has(.is-reading) > .home-panel,
+.home-face:has(.is-reading) > .home-motif:not(.is-reading){filter:opacity(.25)}
+@media(prefers-reduced-motion:reduce){.motif-reading,.motif-reading[hidden],.entries-home > *,.home-face > .home-panel,.home-face > .home-motif{transition:none}}
 .motif-reading strong{font-weight:400;font-size:14px}
 .motif-reading p{margin:8px 0 12px;min-height:64px}
 .motif-reading-nav{display:flex;justify-content:space-between;align-items:center}
@@ -1288,3 +1294,31 @@ body:has(.poem-focus) #header{visibility:visible;z-index:20;background:transpare
 .motif-taste .motif-reading,.motif-sight .motif-reading,.motif-hearing .motif-reading,.motif-touch .motif-reading{top:auto;bottom:90%}
 [data-theme=dark] .motif-reading{background:#283149;color:#ece6dc}
 @media(max-width:650px){.motif-reading{width:180px;padding:12px;font-size:12px}}
+
+/* Keep category navigation close to the collection, on a shallow arc. */
+@media(min-width:701px){
+  .entries-filters{left:19%;top:34%;width:9%;gap:5px}
+  .entries-filters button{font-size:clamp(13px,1.18cqw,18px)}
+  .entries-filters button:nth-child(1),.entries-filters button:nth-child(5){translate:12px 0}
+  .entries-filters button:nth-child(2),.entries-filters button:nth-child(4){translate:0 0}
+  .entries-filters button:nth-child(3){translate:-5px 0}
+}
+
+.entries-filters button[aria-pressed=true]{text-shadow:0 0 8px #dd965d99,0 2px 15px #e8aa7580}
+@media(min-width:701px){
+  .entries-filters{top:38%;gap:2px}
+  .entries-filters button{font-size:clamp(12px,1cqw,15px);min-height:clamp(24px,2.3cqw,34px)}
+}
+
+/* Reading cards remain solid while the surrounding scene dims. */
+.entries-home .home-motif.is-reading{opacity:1;filter:none}
+.entries-home .motif-reading:not([hidden]){opacity:1;background:#f7f5ed}
+[data-theme=dark] .entries-home .motif-reading:not([hidden]){background:#283149}
+
+@media(min-width:701px){
+  .entries-deck:has(.collage-home){width:44%;left:53%}
+  .collage-home,.collage-home:not(:has(.collage-card:nth-child(3))){height:clamp(174px,30dvh,264px)}
+  .entries-deck:has(.collage-home) .poem-pages{left:calc((44cqw - 52.71cqw)/2 - 5%);right:calc((44cqw - 52.71cqw)/2 - 5%)}
+}
+
+.upload-types{display:block;margin-top:8px;font:10px/1.4 Lekton,monospace;color:var(--sub);letter-spacing:.02em}
