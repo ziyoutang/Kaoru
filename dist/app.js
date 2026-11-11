@@ -964,7 +964,7 @@ function renderJournalFlow() {
   const metadataOptions = (field, choices) => {
     const value = active[field] || '';
     const options = value && !choices.includes(value) ? [value,...choices] : choices;
-    return `<div class="metadata-wheel" role="group" aria-label="${field === 'weather' ? 'Weather' : 'Feeling'}" data-metadata="${field}">${['',...options].map(option => `<button type="button" data-value="${esc(option)}" aria-label="${esc(option || 'Not selected')}" title="${esc(option || 'Not selected')}" aria-pressed="${option === value}">${metadataIcons[option] || esc(option) || '—'}</button>`).join('')}</div>`;
+    return `<div class="metadata-selector"><button type="button" class="metadata-arrow" data-step="-1" aria-label="Previous ${field}">‹</button><div class="metadata-wheel" role="group" aria-label="${field === 'weather' ? 'Weather' : 'Feeling'}" data-metadata="${field}">${['',...options].map(option => `<button type="button" data-value="${esc(option)}" aria-label="${esc(option || 'Not selected')}" title="${esc(option || 'Not selected')}" aria-pressed="${option === value}">${metadataIcons[option] || esc(option) || '—'}</button>`).join('')}</div><button type="button" class="metadata-arrow" data-step="1" aria-label="Next ${field}">›</button></div>`;
   };
   main.innerHTML = `<div class="wrap view journal-flow-view">
     ${button('journal-back','Back','link','','back')}
@@ -991,24 +991,39 @@ function renderJournalFlow() {
   </div>`;
   main.querySelectorAll('.metadata-wheel').forEach(wheel => {
     const options = [...wheel.children];
+    const arrows = [...wheel.parentElement.querySelectorAll('.metadata-arrow')];
     const select = option => {
       options.forEach(item => item.setAttribute('aria-pressed',String(item === option)));
+      arrows[0].disabled = option === options[0];
+      arrows[1].disabled = option === options.at(-1);
       active[wheel.dataset.metadata] = option.dataset.value;
       rememberDraft();
     };
-    const position = option => option.offsetTop - options[0].offsetTop;
-    wheel.scrollTop = position(wheel.querySelector('[aria-pressed="true"]'));
+    const position = option => option.offsetLeft - options[0].offsetLeft;
+    wheel.scrollLeft = position(wheel.querySelector('[aria-pressed="true"]'));
+    arrows[0].disabled = options[0].getAttribute('aria-pressed') === 'true';
+    arrows[1].disabled = options.at(-1).getAttribute('aria-pressed') === 'true';
+    const step = direction => {
+      const current = options.findIndex(option => option.getAttribute('aria-pressed') === 'true');
+      options[Math.max(0,Math.min(options.length-1,current+direction))].click();
+    };
+    arrows.forEach(arrow => arrow.addEventListener('click', () => step(Number(arrow.dataset.step))));
+    wheel.addEventListener('keydown', event => {
+      if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      step(event.key === 'ArrowRight' ? 1 : -1);
+    });
     let settle;
     wheel.addEventListener('scroll', () => {
       clearTimeout(settle);
       settle = setTimeout(() => {
         if (!wheel.isConnected) return;
-        select(options.reduce((nearest,item) => Math.abs(position(item)-wheel.scrollTop) < Math.abs(position(nearest)-wheel.scrollTop) ? item : nearest));
+        select(options.reduce((nearest,item) => Math.abs(position(item)-wheel.scrollLeft) < Math.abs(position(nearest)-wheel.scrollLeft) ? item : nearest));
       },100);
     },{passive:true});
     options.forEach(option => option.addEventListener('click', () => {
       select(option);
-      wheel.scrollTo({top:position(option),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+      wheel.scrollTo({left:position(option),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
     }));
   });
   if (stage === 'poem') {

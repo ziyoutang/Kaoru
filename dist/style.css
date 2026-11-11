@@ -1084,7 +1084,7 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 .journal-writing-sheet > input{font-size:17px}
 .journal-writing-sheet input:focus-visible,.journal-writing-sheet textarea:focus-visible{outline:1px solid #7c8fab;outline-offset:5px}
 .journal-writing-sheet textarea{flex:1;min-height:0;resize:none}
-.journal-metadata{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px}
+.journal-metadata{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:16px}
 .journal-metadata label{font:italic 11px/1.4 Inter,sans-serif;color:#777}
 .journal-metadata input{font-size:12px}
 .journal-flow-next{display:flex;flex-direction:column;align-items:center;gap:8px}
@@ -1129,9 +1129,13 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 
 #main > .journal-flow-view{margin-top:clamp(12px,3dvh,24px)}
 
+.metadata-field{min-width:0}
 .metadata-field > span{font:italic 11px/1.4 Inter,sans-serif;color:#777}
-.metadata-wheel{position:relative;height:60px;overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y mandatory;padding-block:16px;box-sizing:border-box;scrollbar-width:none;mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}
+.metadata-selector{display:flex;align-items:center;min-width:0}
+.metadata-arrow{flex:0 0 18px;padding:0;border:0;background:none;color:#596982;font:20px/36px Lekton,monospace;cursor:pointer}
+.metadata-arrow:disabled{opacity:.25;cursor:default}
+.metadata-wheel{position:relative;display:flex;flex:1;min-width:0;height:40px;overflow-x:auto;overflow-y:hidden;overscroll-behavior:contain;scroll-snap-type:x mandatory;padding:2px calc(50% - 34px);box-sizing:border-box;scrollbar-width:none;mask-image:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
 .metadata-wheel::-webkit-scrollbar{display:none}
-.metadata-wheel button{display:block;width:100%;height:28px;min-height:28px;padding:0;border:0;background:transparent;scroll-snap-align:center;font-size:19px;line-height:28px;opacity:.4;scale:.85;transition:opacity .18s,scale .18s;cursor:pointer}
-.metadata-wheel button[aria-pressed="true"]{opacity:1;scale:1}
+.metadata-wheel button{display:block;flex:0 0 32px;width:32px;height:36px;min-height:36px;padding:0;border:0;background:transparent;scroll-snap-align:center;font-size:19px;line-height:36px;opacity:.4;scale:.85;transition:opacity .18s,scale .18s,filter .18s;cursor:pointer}
+.metadata-wheel button[aria-pressed="true"]{opacity:1;scale:1;filter:drop-shadow(0 0 4px #739cdbaa)}
 .metadata-wheel button:focus-visible{outline:1px solid #7c8fab;outline-offset:-2px}
