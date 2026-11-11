@@ -1647,3 +1647,33 @@ document.addEventListener('pointermove',event => {
   sphereDrag.x = event.clientX;
 });
 ['pointerup','pointercancel','lostpointercapture'].forEach(type => document.addEventListener(type,() => { sphereDrag = null; }));
+
+function showWelcome() {
+  if (location.hash && location.hash !== '#diary') return;
+  try { if (localStorage.getItem('kaoru-hide-welcome') === 'true') return; } catch {}
+  const welcome = document.createElement('dialog');
+  welcome.className = 'welcome-screen';
+  welcome.setAttribute('aria-labelledby','welcome-title');
+  welcome.innerHTML = `<div class="welcome-center"><h1 id="welcome-title">Kaoru</h1><p class="welcome-slogan">keep what lingers</p>
+    <div class="welcome-tip" hidden><p>Scroll sideways to move between<br>All entries, Senses, and Create New.</p><p class="welcome-alternative">You can also use the on-screen arrows.</p>
+    <label><input type="checkbox" id="welcome-hide"> Don’t show again</label>
+    <button type="button" class="btn" id="welcome-enter">Enter diary ${icon('arrow')}</button></div></div>`;
+  document.body.append(welcome);
+  welcome.showModal();
+  const timer = setTimeout(() => {
+    welcome.querySelector('.welcome-tip').hidden = false;
+    welcome.classList.add('is-ready');
+    welcome.querySelector('#welcome-enter').focus({preventScroll:true});
+  },3500);
+  welcome.addEventListener('keydown',event => event.stopPropagation());
+  welcome.addEventListener('wheel',event => event.stopPropagation());
+  welcome.querySelector('#welcome-enter').addEventListener('click',() => welcome.close());
+  welcome.addEventListener('close',() => {
+    clearTimeout(timer);
+    if (welcome.querySelector('#welcome-hide').checked) {
+      try { localStorage.setItem('kaoru-hide-welcome','true'); } catch {}
+    }
+    welcome.remove();
+  },{once:true});
+}
+showWelcome();

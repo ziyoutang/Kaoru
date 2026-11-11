@@ -1166,3 +1166,19 @@ body:has(#main > .view) .brand-slogan{font-size:var(--brand-caption);line-height
 #main > .journal-flow-view.is-writing-focus{position:fixed;z-index:10;inset:calc(22dvh + 24px) 0 0;width:100%;height:auto;margin:0;padding:0;overflow-y:auto}
 .is-writing-focus .journal-flow-scene{display:block;padding:0 0 40px}
 .is-writing-focus > .back,.is-writing-focus > button,.is-writing-focus .journal-flow-scene h1,.is-writing-focus .journal-flow-next,.is-writing-focus .journal-flow-footer{display:none}
+
+.welcome-screen{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;padding:24px;border:0;background:var(--paper);color:var(--ink);overflow:auto}
+.welcome-screen::backdrop{background:var(--paper)}
+.welcome-center{position:absolute;top:50%;left:50%;width:min(420px,calc(100% - 48px));text-align:center;transform:translate(-50%,-50%);transition:top .8s ease}
+.welcome-center h1{margin:0;font:400 var(--brand-size)/1 Lekton,monospace;color:var(--navy,var(--ink))}
+.welcome-slogan{margin:14px 0 0;font:italic 11px/1.4 Lekton,monospace;letter-spacing:.29em;color:var(--sub)}
+.welcome-screen.is-ready .welcome-center{top:43%}
+.welcome-tip{position:absolute;top:100%;width:100%;padding-top:32px;font:400 15px/1.7 Lekton,monospace;animation:welcome-reveal .8s ease both}
+.welcome-tip p{margin:0 0 12px}
+.welcome-tip .welcome-alternative{font-size:12px;color:var(--sub)}
+.welcome-tip label{display:flex;justify-content:center;align-items:center;gap:8px;margin:22px 0 12px;font-size:13px;color:var(--sub)}
+.welcome-tip input{width:14px;height:14px;accent-color:#485e91}
+.welcome-tip .btn{background:transparent;border:0;font:400 14px Lekton,monospace}
+@keyframes welcome-reveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.welcome-center{transition:none}.welcome-tip{animation:none}}
+@media(max-height:500px){.welcome-screen.is-ready .welcome-center{top:25%}.welcome-tip{padding-top:18px}}
